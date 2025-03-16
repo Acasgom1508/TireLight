@@ -1,12 +1,15 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import Feather from "react-native-vector-icons/Feather"; // Importa Feather
+import { useNavigation } from "@react-navigation/native"; // Importa useNavigation
 
 export default function Bienvenida() {
+  const navigation = useNavigation(); // Hook para la navegación
+
   return (
     <View style={styles.mainContainer}>
       <Image
-        source={require("./assets/images/Logo.png")}
+        source={require("../assets/images/Logo.png")}
         style={styles.imagen}
       />
 
@@ -20,12 +23,15 @@ export default function Bienvenida() {
           personalización se encuentran.
         </Text>
         <Image
-          source={require("./assets/images/Bienvenida/Supra-Bienvenida.png")}
+          source={require("../assets/images/Bienvenida/Supra-Bienvenida.png")}
           style={styles.supra}
         />
-        <TouchableOpacity style={styles.boton}>
+        <TouchableOpacity
+          style={styles.boton}
+          onPress={() => navigation.navigate("InicioSesion")} // Navega a InicioSesion
+        >
           <Text style={styles.textoBoton}>Empezar</Text>
-          <Feather name="arrow-right-circle" size={35} color="#FFFFFF"/>
+          <Feather name="arrow-right-circle" size={35} color="#FFFFFF" />
         </TouchableOpacity>
         <StatusBar style="auto" />
       </View>
@@ -81,7 +87,7 @@ const styles = StyleSheet.create({
     marginTop: 50,
     width: 244,
     height: 64,
-    flexDirection: "row", 
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
