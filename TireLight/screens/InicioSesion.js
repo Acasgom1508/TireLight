@@ -7,45 +7,103 @@ import {
   TouchableOpacity,
   Dimensions,
   TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
 } from "react-native";
+import { useState } from "react";
 import Feather from "react-native-vector-icons/Feather";
 import { useNavigation } from "@react-navigation/native";
+import { FIREBASE_AUTH } from "../FirebaseConfig";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 
 const { width, height } = Dimensions.get("window");
 
 export default function InicioSesion() {
   const navigation = useNavigation();
 
+  const [correo, setCorreo] = useState("");
+  const [pass, setPass] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const auth = FIREBASE_AUTH;
+
+  const iniciarSesion = async () => {
+    setCargando(true);
+    try {
+      const response = await signInWithEmailAndPassword(auth, correo, pass);
+      console.log(response);
+      alert("Mira tu correo");
+    } catch (error) {
+      console.log(error);
+      alert("Error al iniciar sesión: " + error.message);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const crearCuenta = async () => {
+    setCargando(true);
+    try {
+      const response = await createUserWithEmailAndPassword(auth, correo, pass);
+      console.log(response);
+      alert("Mira tu correo");
+    } catch (error) {
+      console.log(error);
+      alert("Error al crear usuario: " + error.message);
+    } finally {
+      setCargando(false);
+    }
+  };
+
   return (
     <View style={styles.mainContainer}>
-      <Image
-        source={require("../assets/images/Logo.png")}
-        style={styles.logo}
-      />
-      <Text style={styles.subtitulo}>
-        Accede a tu cuenta y únete a la competencia fotográfica más vibrante del
-        tuning.
-      </Text>
-      <View style={styles.container}>
-        <Text style={styles.titulo}>Iniciar Sesión</Text>
+      <KeyboardAvoidingView behavior="position">
+        <Image
+          source={require("../assets/images/Logo.png")}
+          style={styles.logo}
+        />
+        <Text style={styles.subtitulo}>
+          Accede a tu cuenta y únete a la competencia fotográfica más vibrante
+          del tuning.
+        </Text>
+        <View style={styles.container}>
+          <Text style={styles.titulo}>Iniciar Sesión</Text>
 
-        <TextInput style={styles.input} placeholder="Correo electrónico" />
-        <TextInput style={styles.input} placeholder="Contraseña" secureTextEntry/>
-
-        <TouchableOpacity style={styles.boton}>
-          <Text style={styles.textoBoton}>Iniciar sesión</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.pregunta}>¿No tienes cuenta? Créala ahora</Text>
-        <TouchableOpacity style={styles.crearcuenta}>
-          <Text style={styles.textoBotonCrear}>Crear cuenta ahora</Text>
-          <Feather
-            name="arrow-right-circle"
-            size={width * 0.08}
-            color="#ED6D2F"
+          <TextInput
+            style={styles.input}
+            value={correo}
+            placeholder="Correo electrónico"
+            onChangeText={(text) => setCorreo(text)}
           />
-        </TouchableOpacity>
-      </View>
+          <TextInput
+            style={styles.input}
+            value={pass}
+            placeholder="Contraseña"
+            secureTextEntry={true}
+            onChangeText={(text) => setPass(text)}
+          />
+
+          {cargando ? (
+            <ActivityIndicator size="large" color="#1E205B" style={{marginVertical: width*0.064}}/>
+          ) : (
+            <TouchableOpacity style={styles.boton} onPress={iniciarSesion}>
+              <Text style={styles.textoBoton}>Iniciar sesión</Text>
+            </TouchableOpacity>
+          )}
+
+          <Text style={styles.pregunta}>¿No tienes cuenta? Créala ahora</Text>
+          <TouchableOpacity style={styles.crearcuenta} onPress={crearCuenta}>
+            <Text style={styles.textoBotonCrear}>Crear cuenta ahora</Text>
+            <Feather
+              name="arrow-right-circle"
+              size={width * 0.08}
+              color="#ED6D2F"
+            />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
       <StatusBar style="auto" />
     </View>
   );
@@ -60,11 +118,12 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: width * 0.8,
-    height: height * 0.1,
+    width: width * 0.8, 
+    height: height * 0.1, 
     resizeMode: "contain",
-    marginBottom: height * 0.04,
-    marginTop: height * 0.04,
+    marginBottom: height * 0.04, 
+    marginTop: height * 0.04, 
+    alignSelf: "center",
   },
 
   container: {
