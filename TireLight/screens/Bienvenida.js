@@ -1,18 +1,27 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
-import Feather from "react-native-vector-icons/Feather"; // Importa Feather
-import { useNavigation } from "@react-navigation/native"; // Importa useNavigation
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import Feather from "react-native-vector-icons/Feather";
+import { useNavigation } from "@react-navigation/native";
+
+// Se modificará más adelante para hacer la app responsiva
+const { width, height } = Dimensions.get("window");
 
 export default function Bienvenida() {
-  const navigation = useNavigation(); // Hook para la navegación
+  const navigation = useNavigation();
 
   return (
     <View style={styles.mainContainer}>
       <Image
         source={require("../assets/images/Logo.png")}
-        style={styles.imagen}
+        style={styles.logo}
       />
-
       <View style={styles.container}>
         <Text style={styles.titulo}>
           El Rally Fotográfico TireLight llega a Sevilla
@@ -28,10 +37,14 @@ export default function Bienvenida() {
         />
         <TouchableOpacity
           style={styles.boton}
-          onPress={() => navigation.navigate("InicioSesion")} // Navega a InicioSesion
+          onPress={() => navigation.navigate("InicioSesion")}
         >
           <Text style={styles.textoBoton}>Empezar</Text>
-          <Feather name="arrow-right-circle" size={35} color="#FFFFFF" />
+          <Feather
+            name="arrow-right-circle"
+            size={width * 0.08}
+            color="#FFFFFF"
+          />
         </TouchableOpacity>
         <StatusBar style="auto" />
       </View>
@@ -44,59 +57,58 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     backgroundColor: "#EFEFEF",
+    paddingVertical: height * 0.05,
   },
 
-  imagen: {
-    width: 330,
-    height: 67,
+  logo: {
+    width: width * 0.8,
+    height: height * 0.1,
     resizeMode: "contain",
-    marginTop: 80,
-    marginBottom: 30,
+    marginBottom: height * 0.04,
+    marginTop: height * 0.04,
   },
 
   container: {
-    marginHorizontal: 20,
+    marginHorizontal: width * 0.05,
     alignItems: "center",
   },
 
   titulo: {
-    fontSize: 32,
+    fontSize: width * 0.07,
     fontWeight: "900",
     color: "#393939",
-    marginBottom: 20,
+    marginBottom: height * 0.02,
   },
 
   subtitulo: {
-    fontSize: 21,
+    fontSize: width * 0.05,
     color: "#404040",
-    textAlign: "center",
-    marginBottom: 20,
+    marginBottom: height * 0.02,
   },
 
   supra: {
-    width: 475,
-    height: 247,
+    width: width * 1.2,
+    height: height * 0.3,
     resizeMode: "contain",
-    marginTop: 50,
-    marginRight: 123,
+    marginRight: height * 0.15,
   },
 
   boton: {
     backgroundColor: "#1E205B",
     borderRadius: 10,
-    marginTop: 50,
-    width: 244,
-    height: 64,
+    width: width * 0.6,
+    height: height * 0.08,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: height * 0.03,
   },
 
   textoBoton: {
-    fontSize: 30,
+    fontSize: width * 0.07,
     color: "#FFFFFF",
-    fontWeight: 300,
-    marginRight: 15,
-    marginTop: -6,
+    fontWeight: "300",
+    marginRight: width * 0.03,
   },
+  
 });
