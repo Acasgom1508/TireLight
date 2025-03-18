@@ -14,10 +14,7 @@ import { useState } from "react";
 import Feather from "react-native-vector-icons/Feather";
 import { useNavigation } from "@react-navigation/native";
 import { FIREBASE_AUTH } from "../FirebaseConfig";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -27,6 +24,7 @@ export default function InicioSesion() {
   const [correo, setCorreo] = useState("");
   const [pass, setPass] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [mostrarPass, setMostrarPass] = useState(false);
   const auth = FIREBASE_AUTH;
 
   const iniciarSesion = async () => {
@@ -34,24 +32,10 @@ export default function InicioSesion() {
     try {
       const response = await signInWithEmailAndPassword(auth, correo, pass);
       console.log(response);
-      alert("Mira tu correo");
+      
     } catch (error) {
       console.log(error);
       alert("Error al iniciar sesión: " + error.message);
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const crearCuenta = async () => {
-    setCargando(true);
-    try {
-      const response = await createUserWithEmailAndPassword(auth, correo, pass);
-      console.log(response);
-      alert("Mira tu correo");
-    } catch (error) {
-      console.log(error);
-      alert("Error al crear usuario: " + error.message);
     } finally {
       setCargando(false);
     }
@@ -77,16 +61,33 @@ export default function InicioSesion() {
             placeholder="Correo electrónico"
             onChangeText={(text) => setCorreo(text)}
           />
-          <TextInput
-            style={styles.input}
-            value={pass}
-            placeholder="Contraseña"
-            secureTextEntry={true}
-            onChangeText={(text) => setPass(text)}
-          />
+
+          <View style={{ position: "relative", width: width * 0.8 }}>
+            <TextInput
+              style={styles.input}
+              value={pass}
+              placeholder="Contraseña"
+              secureTextEntry={!mostrarPass}
+              onChangeText={(text) => setPass(text)}
+            />
+            <TouchableOpacity
+              style={styles.iconoOjo}
+              onPress={() => setMostrarPass(!mostrarPass)}
+            >
+              <Feather
+                name={mostrarPass ? "eye" : "eye-off"}
+                size={width * 0.06}
+                color="#1E205B"
+              />
+            </TouchableOpacity>
+          </View>
 
           {cargando ? (
-            <ActivityIndicator size="large" color="#1E205B" style={{marginVertical: width*0.064}}/>
+            <ActivityIndicator
+              size="large"
+              color="#1E205B"
+              style={{ marginVertical: width * 0.064 }}
+            />
           ) : (
             <TouchableOpacity style={styles.boton} onPress={iniciarSesion}>
               <Text style={styles.textoBoton}>Iniciar sesión</Text>
@@ -94,7 +95,10 @@ export default function InicioSesion() {
           )}
 
           <Text style={styles.pregunta}>¿No tienes cuenta? Créala ahora</Text>
-          <TouchableOpacity style={styles.crearcuenta} onPress={crearCuenta}>
+          <TouchableOpacity
+            style={styles.crearcuenta}
+            onPress={() => navigation.navigate("Registro")}
+          >
             <Text style={styles.textoBotonCrear}>Crear cuenta ahora</Text>
             <Feather
               name="arrow-right-circle"
@@ -118,11 +122,11 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: width * 0.8, 
-    height: height * 0.1, 
+    width: width * 0.8,
+    height: height * 0.1,
     resizeMode: "contain",
-    marginBottom: height * 0.04, 
-    marginTop: height * 0.04, 
+    marginBottom: height * 0.04,
+    marginTop: height * 0.04,
     alignSelf: "center",
   },
 
@@ -149,13 +153,6 @@ const styles = StyleSheet.create({
     color: "#404040",
     marginBottom: height * 0.02,
     marginHorizontal: width * 0.05,
-  },
-
-  supra: {
-    width: width * 0.9,
-    height: height * 0.3,
-    resizeMode: "contain",
-    marginTop: height * 0.05,
   },
 
   boton: {
@@ -218,5 +215,12 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderWidth: 3,
     borderColor: "#ED6D2F",
+  },
+
+  iconoOjo: {
+    position: "absolute",
+    right: width * 0.05,
+    top: height * 0.05,
+    zIndex: 1,
   },
 });

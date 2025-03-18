@@ -2,6 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import Bienvenida from "./screens/Bienvenida";
 import InicioSesion from "./screens/InicioSesion";
+import Registro from "./screens/Registro";
 
 const Stack = createStackNavigator();
 
@@ -11,6 +12,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="Bienvenida" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Bienvenida" component={Bienvenida} />
         <Stack.Screen name="InicioSesion" component={InicioSesion} />
+        <Stack.Screen name="Registro" component={Registro} />
       </Stack.Navigator>
     </NavigationContainer>
   );
