@@ -16,7 +16,7 @@ import Feather from "react-native-vector-icons/Feather";
 import { useNavigation } from "@react-navigation/native";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,6 +29,7 @@ export default function Registro() {
   const [NombreyApellidos, setNombreyApellidos] = useState("");
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
+
   const [cargando, setCargando] = useState(false);
   const [mostrarPass1, setMostrarPass1] = useState(false);
   const [mostrarPass2, setMostrarPass2] = useState(false);
@@ -36,28 +37,73 @@ export default function Registro() {
 
   const crearCuenta = async () => {
     setCargando(true);
+
+    if (
+      correo.trim() === "" ||
+      pass.trim() === "" ||
+      confirmPass.trim() === "" ||
+      NombreyApellidos.trim() === "" ||
+      telefono.trim() === "" ||
+      direccion.trim() === ""
+    ) {
+      alert("Complete todos los campos");
+      setCargando(false);
+      return;
+    }
+
+    if (pass !== confirmPass) {
+      alert("Las contraseñas no coinciden");
+      setCargando(false);
+      return;
+    }
+
+    if (pass.length < 6) {
+      alert("La contraseña debe tener al menos 6 caracteres");
+      setCargando(false);
+      return;
+    }
+
     try {
+      // Crear usuario en Firebase Auth
       const response = await createUserWithEmailAndPassword(auth, correo, pass);
-      await addDoc(collection(FIREBASE_DB, "Usuarios"), {
+      const user = response.user; // Obtener usuario creado
+
+      // Guardar en Firestore con el UID como nombre del documento
+      await setDoc(doc(FIREBASE_DB, "Usuarios", user.uid), {
         nombre: NombreyApellidos,
         correo: correo,
         telefono: telefono,
         direccion: direccion,
+        rol: "usuario",
+        fotoperfil: "https://i.pinimg.com/222x/57/70/f0/5770f01a32c3c53e90ecda61483ccb08.jpg"
       });
-      console.log(response);
+
+      console.log("Usuario registrado con UID:", user.uid);
       alert("El usuario se creó correctamente. Inicia sesión para continuar.");
-      // Reiniciamos los campos
+
+      // Reiniciar campos
       setNombreyApellidos("");
       setCorreo("");
       setPass("");
       setConfirmPass("");
       setTelefono("");
       setDireccion("");
-      // Volvemos a la pantalla anterior
+
+      // Volver a la pantalla anterior
       navigation.goBack();
     } catch (error) {
       console.log(error);
-      alert("Error al crear usuario: " + error.message);
+      let errorMessage = "Ocurrió un error";
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage = "El correo ya está en uso";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Correo electrónico inválido";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "La contraseña debe tener al menos 6 caracteres";
+      } else if (error.code === "auth/too-many-requests") {
+        errorMessage = "Demasiados intentos. Intente más tarde";
+      }
+      alert(errorMessage);
     } finally {
       setCargando(false);
     }

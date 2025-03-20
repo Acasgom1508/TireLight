@@ -13,8 +13,9 @@ import {
 import { useState } from "react";
 import Feather from "react-native-vector-icons/Feather";
 import { useNavigation } from "@react-navigation/native";
-import { FIREBASE_AUTH } from "../FirebaseConfig";
+import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore"; // Añadido para Firestore
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,13 +30,48 @@ export default function InicioSesion() {
 
   const iniciarSesion = async () => {
     setCargando(true);
+
+    if (correo.trim() === "" || pass.trim() === "") {
+      alert("Debes llenar todos los campos");
+      setCargando(false);
+      return;
+    }
+
     try {
       const response = await signInWithEmailAndPassword(auth, correo, pass);
+      const user = response.user;
+      // Consulta a la base de datos para obtener el rol del usuario
+      const docRef = doc(FIREBASE_DB, "Usuarios", user.uid);
+      const docSnap = await getDoc(docRef);
+      let rol;
+      if (docSnap.exists()) {
+        rol = docSnap.data().rol;
+        console.log("Rol del usuario: " + rol);
+      } else {
+        console.log("No existe el documento con el ID: ", user.uid);
+        rol = "usuario";
+      }
+      navigation.navigate("Pantallas", { rol });
       console.log(response);
-      
     } catch (error) {
       console.log(error);
-      alert("Error al iniciar sesión: " + error.message);
+      let errorMessage = "Ocurrió un error";
+      if (error.code === "auth/user-not-found") {
+        errorMessage = "Usuario no encontrado";
+      } else if (error.code === "auth/wrong-password") {
+        errorMessage = "Contraseña incorrecta";
+      } else if (error.code === "auth/email-already-in-use") {
+        errorMessage = "El correo ya está en uso";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Correo electrónico inválido";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "La contraseña debe tener al menos 6 caracteres";
+      } else if (error.code === "auth/too-many-requests") {
+        errorMessage = "Demasiados intentos. Intente más tarde";
+      } else if (error.code === "auth/invalid-credential") {
+        errorMessage = "Credenciales inválidas";
+      }
+      alert(errorMessage);
     } finally {
       setCargando(false);
     }
