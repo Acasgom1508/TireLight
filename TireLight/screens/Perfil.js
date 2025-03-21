@@ -6,17 +6,31 @@ import {
   Image,
   TouchableOpacity,
   Button,
-  Dimensions,
   TextInput,
-  ActivityIndicator,
-  KeyboardAvoidingView,
   ScrollView,
+  KeyboardAvoidingView, 
 } from "react-native";
+import { useState } from "react";
 import Feather from "react-native-vector-icons/Feather";
 
 export default function Perfil() {
+  const [nombre, setNombre] = useState("Nombre de Usuario");
+  const [telefono, setTelefono] = useState("640 548 215");
+  const [direccion, setDireccion] = useState("Calle del Tuning, 47");
+
+  const [editandoNombre, setEditandoNombre] = useState(false);
+  const [editandoTelefono, setEditandoTelefono] = useState(false);
+  const [editandoDireccion, setEditandoDireccion] = useState(false);
+
+  const [tempNombre, setTempNombre] = useState(nombre);
+  const [tempTelefono, setTempTelefono] = useState(telefono);
+  const [tempDireccion, setTempDireccion] = useState(direccion);
+
   return (
-    <View style={styles.mainContainer}>
+    <KeyboardAvoidingView
+      style={styles.mainContainer}
+      behavior="height"
+    >
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.botonAtras}
@@ -37,27 +51,113 @@ export default function Perfil() {
 
         <Button style={styles.botonCambiarFoto} title="Cambiar foto" />
 
-        <Text style={styles.nombre}>Nombre de Usuario</Text>
+        <Text style={styles.nombre}>{nombre}</Text>
         <Text style={styles.totalFotos}>Total fotos subidas:</Text>
         <Text style={styles.numeroFotos}>10</Text>
+
         <View style={styles.opciones}>
           <Text style={styles.titulo}>Correo electrónico:</Text>
-          <Text style={styles.valor}>user@example.com</Text>
+          <Text style={styles.valor} numberOfLines={1} ellipsizeMode="tail">
+            user@example.com
+          </Text>
         </View>
+
+        <View style={styles.opciones}>
+          <Text style={styles.titulo}>Nombre:</Text>
+          {editandoNombre ? (
+            <TextInput
+              style={styles.input}
+              value={tempNombre}
+              onChangeText={setTempNombre}
+              autoFocus
+            />
+          ) : (
+            <Text style={styles.valor} numberOfLines={1} ellipsizeMode="tail">
+              {nombre}
+            </Text>
+          )}
+          {editandoNombre ? (
+            <TouchableOpacity
+              style={styles.botonGuardar}
+              onPress={() => {
+                setNombre(tempNombre);
+                setEditandoNombre(false);
+              }}
+            >
+              <Feather name="check" size={20} color="green" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => setEditandoNombre(true)}>
+              <Feather name="edit" size={20} color="black" />
+            </TouchableOpacity>
+          )}
+        </View>
+
         <View style={styles.opciones}>
           <Text style={styles.titulo}>Teléfono:</Text>
-          <Text style={styles.valor}>640 548 215</Text>
-          <Feather name="edit" size={20} color="black" style={{ marginLeft: 10 }}/>
+          {editandoTelefono ? (
+            <TextInput
+              style={styles.input}
+              value={tempTelefono}
+              onChangeText={setTempTelefono}
+              autoFocus
+            />
+          ) : (
+            <Text style={styles.valor} numberOfLines={1} ellipsizeMode="tail">
+              {telefono}
+            </Text>
+          )}
+          {editandoTelefono ? (
+            <TouchableOpacity
+              style={styles.botonGuardar}
+              onPress={() => {
+                setTelefono(tempTelefono);
+                setEditandoTelefono(false);
+              }}
+            >
+              <Feather name="check" size={20} color="green" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => setEditandoTelefono(true)}>
+              <Feather name="edit" size={20} color="black" />
+            </TouchableOpacity>
+          )}
         </View>
+
         <View style={styles.opciones}>
           <Text style={styles.titulo}>Dirección:</Text>
-          <Text style={styles.valor}>Calle del Tuning, 47</Text>
-          <Feather name="edit" size={20} color="black" style={{ marginLeft: 10 }}/>
+          {editandoDireccion ? (
+            <TextInput
+              style={styles.input}
+              value={tempDireccion}
+              onChangeText={setTempDireccion}
+              autoFocus
+            />
+          ) : (
+            <Text style={styles.valor} numberOfLines={1} ellipsizeMode="tail">
+              {direccion}
+            </Text>
+          )}
+          {editandoDireccion ? (
+            <TouchableOpacity
+              style={styles.botonGuardar}
+              onPress={() => {
+                setDireccion(tempDireccion);
+                setEditandoDireccion(false);
+              }}
+            >
+              <Feather name="check" size={20} color="green" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => setEditandoDireccion(true)}>
+              <Feather name="edit" size={20} color="black" />
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
 
       <StatusBar style="auto" />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -68,7 +168,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 60,
   },
-
+  
   botonAtras: {
     position: "absolute",
     left: 35,
@@ -80,8 +180,6 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: "center",
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
   },
 
   textoHeader: {
@@ -111,6 +209,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 20,
     textAlign: "center",
+    color: "#1E205B",
   },
 
   totalFotos: {
@@ -119,7 +218,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-
+  
   numeroFotos: {
     fontSize: 45,
     marginBottom: 20,
@@ -129,17 +228,33 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
+    color: "#1E205B",
   },
 
   opciones: {
     flexDirection: "row",
-    marginBottom: 20,
+    marginBottom: 15,
     width: "80%",
+    alignSelf: "flex-start",
+    alignItems: "center", 
+    borderBottomWidth: 1,
+    borderBottomColor: "#D3D3D3",
+    paddingBottom: 10,
   },
-
-  valor:{
+  valor: {
+    marginLeft: 10,
+    fontSize: 20,
+    flex: 1,
+  },
+  input: {
     marginLeft: 10,
     fontSize: 18,
-  }
+    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1E205B",
+  },
+  
+  botonGuardar: {
+    marginLeft: 10,
+  },
 });
