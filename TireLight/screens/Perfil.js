@@ -1,4 +1,5 @@
 import { StatusBar } from "expo-status-bar";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,15 +9,24 @@ import {
   Button,
   TextInput,
   ScrollView,
-  KeyboardAvoidingView, 
+  KeyboardAvoidingView,
+  Dimensions,
+  Alert,
+  Modal,
 } from "react-native";
-import { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import Feather from "react-native-vector-icons/Feather";
+
+const { width, height } = Dimensions.get("window");
 
 export default function Perfil() {
   const [nombre, setNombre] = useState("Nombre de Usuario");
   const [telefono, setTelefono] = useState("640 548 215");
   const [direccion, setDireccion] = useState("Calle del Tuning, 47");
+  const [correo, setCorreo] = useState("");
+  const [fotoPerfil, setFotoPerfil] = useState("");
 
   const [editandoNombre, setEditandoNombre] = useState(false);
   const [editandoTelefono, setEditandoTelefono] = useState(false);
@@ -25,12 +35,85 @@ export default function Perfil() {
   const [tempNombre, setTempNombre] = useState(nombre);
   const [tempTelefono, setTempTelefono] = useState(telefono);
   const [tempDireccion, setTempDireccion] = useState(direccion);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const auth = FIREBASE_AUTH;
+  const db = FIREBASE_DB;
+  const user = auth.currentUser;
+
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    if (user) {
+      const cargarDatosUsuario = async () => {
+        try {
+          const refDoc = doc(db, "Usuarios", user.uid);
+          const docSnap = await getDoc(refDoc);
+          if (docSnap.exists()) {
+            const datos = docSnap.data();
+            setCorreo(datos.correo);
+            setFotoPerfil(datos.fotoperfil);
+            setNombre(datos.nombre);
+            setTelefono(datos.telefono);
+            setDireccion(datos.direccion);
+            setTempNombre(datos.nombre);
+            setTempTelefono(datos.telefono);
+            setTempDireccion(datos.direccion);
+          }
+        } catch (error) {
+          Alert.alert("Error", "No se pudieron cargar los datos del usuario.");
+        }
+      };
+
+      cargarDatosUsuario();
+    }
+  }, []);
+
+  const actualizarCampo = async (campo, valor) => {
+    if (user) {
+      try {
+        const refDoc = doc(db, "Usuarios", user.uid);
+        await updateDoc(refDoc, { [campo]: valor });
+      } catch (error) {
+        Alert.alert("Error", `No se pudo actualizar el campo ${campo}`);
+      }
+    }
+  };
+
+  const cerrarSesion = () => {
+    auth
+      .signOut()
+      .then(() => {
+        navigation.navigate("InicioSesion");
+      })
+      .catch((error) => {
+        Alert.alert("Error", "No se pudo cerrar sesión. Inténtalo de nuevo.");
+      });
+  };
+
+  const eliminarCuenta = () => {
+    const user = auth.currentUser;
+    if (user) {
+      user
+        .delete()
+        .then(() => {
+          Alert.alert(
+            "Cuenta eliminada",
+            "Tu cuenta ha sido eliminada correctamente."
+          );
+          navigation.navigate("InicioSesion");
+        })
+        .catch((error) => {
+          Alert.alert(
+            "Error",
+            "No se pudo eliminar la cuenta. Inténtalo de nuevo."
+          );
+        });
+    }
+  };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.mainContainer}
-      behavior="height"
-    >
+    <KeyboardAvoidingView style={styles.mainContainer} behavior="height">
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.botonAtras}
@@ -44,7 +127,7 @@ export default function Perfil() {
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <Image
           source={{
-            uri: "https://i.pinimg.com/222x/57/70/f0/5770f01a32c3c53e90ecda61483ccb08.jpg",
+            uri: fotoPerfil || "https://i.pinimg.com/222x/57/70/f0/5770f01a32c3c53e90ecda61483ccb08.jpg",
           }}
           style={styles.image}
         />
@@ -58,7 +141,7 @@ export default function Perfil() {
         <View style={styles.opciones}>
           <Text style={styles.titulo}>Correo electrónico:</Text>
           <Text style={styles.valor} numberOfLines={1} ellipsizeMode="tail">
-            user@example.com
+            {correo}
           </Text>
         </View>
 
@@ -81,6 +164,7 @@ export default function Perfil() {
               style={styles.botonGuardar}
               onPress={() => {
                 setNombre(tempNombre);
+                actualizarCampo("nombre", tempNombre);
                 setEditandoNombre(false);
               }}
             >
@@ -112,6 +196,7 @@ export default function Perfil() {
               style={styles.botonGuardar}
               onPress={() => {
                 setTelefono(tempTelefono);
+                actualizarCampo("telefono", tempTelefono);
                 setEditandoTelefono(false);
               }}
             >
@@ -143,6 +228,7 @@ export default function Perfil() {
               style={styles.botonGuardar}
               onPress={() => {
                 setDireccion(tempDireccion);
+                actualizarCampo("direccion", tempDireccion);
                 setEditandoDireccion(false);
               }}
             >
@@ -154,7 +240,54 @@ export default function Perfil() {
             </TouchableOpacity>
           )}
         </View>
+
+        <TouchableOpacity style={styles.botonCerrar} onPress={cerrarSesion}>
+          <Text style={styles.cerrarSesion}>Cerrar Sesión</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.botonBorrar}
+          onPress={() => setModalVisible(true)}
+        >
+          <Feather name="trash" size={20} color="red" />
+          <Text style={styles.borrarCuenta}>Eliminar cuenta</Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.containerModal}>
+          <View style={styles.contenidoModal}>
+            <Text style={styles.tituloModal}>
+              ¿Estás seguro de que deseas eliminar tu cuenta?
+            </Text>
+            <Text style={styles.subtituloModal}>
+              Esta acción no se puede deshacer.
+            </Text>
+            <View style={styles.botonesModal}>
+              <TouchableOpacity
+                style={styles.botonCancelar}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.textoBotonesModal}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.botonEliminarDef}
+                onPress={() => {
+                  setModalVisible(false);
+                  eliminarCuenta();
+                }}
+              >
+                <Text style={styles.textoBotonesModal}>Eliminar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <StatusBar style="auto" />
     </KeyboardAvoidingView>
@@ -166,95 +299,180 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f2f2f2",
     alignItems: "center",
-    marginTop: 60,
+    marginTop: height * 0.1,
   },
-  
+
   botonAtras: {
     position: "absolute",
-    left: 35,
+    left: width * 0.1,
   },
 
   header: {
     flexDirection: "row",
     width: "100%",
-    height: 50,
+    height: height * 0.07,
     justifyContent: "center",
     alignItems: "center",
   },
 
   textoHeader: {
-    fontSize: 20,
+    fontSize: width * 0.05,
   },
 
   scrollViewContainer: {
     flexGrow: 1,
     alignItems: "center",
-    width: "100%",
-    paddingVertical: 20,
+    width: width,
+    paddingVertical: height * 0.03,
+    paddingHorizontal: width * 0.1,
   },
 
   image: {
-    width: 200,
-    height: 200,
-    marginTop: 20,
-    marginBottom: 10,
-    borderRadius: 100,
+    width: width * 0.5,
+    height: width * 0.5,
+    marginBottom: height * 0.02,
+    borderRadius: (width * 0.5) / 2,
     borderWidth: 1,
     borderColor: "#9B9B9B",
   },
 
   nombre: {
-    marginTop: 20,
-    fontSize: 25,
+    marginTop: height * 0.02,
+    fontSize: width * 0.06,
     fontWeight: "700",
-    marginBottom: 20,
+    marginBottom: height * 0.02,
     textAlign: "center",
     color: "#1E205B",
   },
 
   totalFotos: {
-    marginTop: 10,
-    fontSize: 20,
-    marginBottom: 20,
+    marginTop: height * 0.01,
+    fontSize: width * 0.05,
+    marginBottom: height * 0.02,
     textAlign: "center",
   },
-  
+
   numeroFotos: {
-    fontSize: 45,
-    marginBottom: 20,
+    fontSize: width * 0.1,
+    marginBottom: height * 0.02,
     textAlign: "center",
   },
 
   titulo: {
-    fontSize: 20,
+    fontSize: width * 0.05,
     fontWeight: "bold",
     color: "#1E205B",
   },
 
   opciones: {
     flexDirection: "row",
-    marginBottom: 15,
-    width: "80%",
+    marginBottom: height * 0.02,
     alignSelf: "flex-start",
-    alignItems: "center", 
+    alignItems: "center",
     borderBottomWidth: 1,
     borderBottomColor: "#D3D3D3",
-    paddingBottom: 10,
+    paddingBottom: height * 0.01,
   },
   valor: {
-    marginLeft: 10,
-    fontSize: 20,
+    marginLeft: width * 0.02,
+    fontSize: width * 0.05,
     flex: 1,
   },
   input: {
-    marginLeft: 10,
-    fontSize: 18,
+    marginLeft: width * 0.02,
+    fontSize: width * 0.045,
     flex: 1,
     borderBottomWidth: 1,
     borderBottomColor: "#1E205B",
   },
-  
+
   botonGuardar: {
-    marginLeft: 10,
+    marginLeft: width * 0.02,
+  },
+
+  cerrarSesion: {
+    fontSize: width * 0.05,
+    color: "white",
+    fontWeight: "bold",
+  },
+
+  botonCerrar: {
+    backgroundColor: "#ED6D2F",
+    borderRadius: 10,
+    width: width * 0.5,
+    height: height * 0.05,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: height * 0.03,
+  },
+
+  botonBorrar: {
+    marginTop: height * 0.03,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  borrarCuenta: {
+    fontSize: width * 0.05,
+    color: "red",
+    marginLeft: width * 0.02,
+  },
+
+  containerModal: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+
+  contenidoModal: {
+    width: width * 0.8,
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: width * 0.05,
+    alignItems: "center",
+  },
+
+  tituloModal: {
+    fontSize: width * 0.045,
+    marginBottom: height * 0.02,
+    textAlign: "center",
+  },
+
+  subtituloModal: {
+    fontSize: width * 0.035,
+    color: "#666",
+    marginBottom: height * 0.02,
+    textAlign: "center",
+  },
+
+  botonesModal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+
+  botonCancelar: {
+    backgroundColor: "#BEBEBE",
+    padding: width * 0.03,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: width * 0.02,
+    alignItems: "center",
+  },
+
+  botonEliminarDef: {
+    backgroundColor: "red",
+    padding: width * 0.03,
+    borderRadius: 5,
+    flex: 1,
+    marginLeft: width * 0.02,
+    alignItems: "center",
+  },
+
+  textoBotonesModal: {
+    color: "white",
+    fontWeight: "bold",
   },
 });
