@@ -18,31 +18,44 @@ import { useNavigation } from "@react-navigation/native";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import Feather from "react-native-vector-icons/Feather";
+import * as ImagePicker from "expo-image-picker";
 
 const { width, height } = Dimensions.get("window");
 
 export default function Perfil() {
+  // UseStates de los diferentes campos
   const [nombre, setNombre] = useState("Nombre de Usuario");
   const [telefono, setTelefono] = useState("640 548 215");
   const [direccion, setDireccion] = useState("Calle del Tuning, 47");
   const [correo, setCorreo] = useState("");
   const [fotoPerfil, setFotoPerfil] = useState("");
+  const [fotos, setFotos] = useState(0);
 
+  // UseStates para editar los campos
   const [editandoNombre, setEditandoNombre] = useState(false);
   const [editandoTelefono, setEditandoTelefono] = useState(false);
   const [editandoDireccion, setEditandoDireccion] = useState(false);
 
+  // UseStates para los campos temporales
   const [tempNombre, setTempNombre] = useState(nombre);
   const [tempTelefono, setTempTelefono] = useState(telefono);
   const [tempDireccion, setTempDireccion] = useState(direccion);
   const [modalVisible, setModalVisible] = useState(false);
 
+  // Firebase
   const auth = FIREBASE_AUTH;
   const db = FIREBASE_DB;
   const user = auth.currentUser;
 
-  const navigation = useNavigation();
+  // Cloudinary - datos API
+  const cloud_name = "dai0shknj";
+  const preset_name = "prueba";
+  const [loading, setLoading] = useState(false);
 
+  // Navigation
+  const navigation = useNavigation(); 
+
+  // UseEffect para cargar los datos del usuario al iniciar la pantalla
   useEffect(() => {
     if (user) {
       const cargarDatosUsuario = async () => {
@@ -56,6 +69,7 @@ export default function Perfil() {
             setNombre(datos.nombre);
             setTelefono(datos.telefono);
             setDireccion(datos.direccion);
+            setFotos(datos.fotos);
             setTempNombre(datos.nombre);
             setTempTelefono(datos.telefono);
             setTempDireccion(datos.direccion);
@@ -69,6 +83,7 @@ export default function Perfil() {
     }
   }, []);
 
+  // Función para actualizar los campos del usuario
   const actualizarCampo = async (campo, valor) => {
     if (user) {
       try {
@@ -80,6 +95,7 @@ export default function Perfil() {
     }
   };
 
+  // Función para cerrar sesión
   const cerrarSesion = () => {
     auth
       .signOut()
@@ -91,6 +107,7 @@ export default function Perfil() {
       });
   };
 
+  // Función para eliminar la cuenta del usuario
   const eliminarCuenta = () => {
     const user = auth.currentUser;
     if (user) {
@@ -112,6 +129,73 @@ export default function Perfil() {
     }
   };
 
+  // Función para abrir la galería y seleccionar una imagen
+  const pickImage = async () => {
+    // Solicita permisos si no están dados
+    const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!result.granted) {
+      Alert.alert("Permisos denegados", "Necesitas dar acceso a la galería");
+      return;
+    }
+
+    // Abre la galería
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!pickerResult.canceled) {
+      const selectedImage = pickerResult.assets[0];
+      uploadImage(selectedImage);
+    }
+  };
+
+  // Función para subir la imagen a Cloudinary
+  const uploadImage = async (image) => {
+    // Código adaptado a react native de https://github.com/regenerik/guia-cloudinary-reactjs/blob/master/Cloudinary.jsx
+    const data = new FormData();
+
+    data.append("file", {
+      uri: image.uri,
+      name: "upload.jpg",
+      type: "image/jpeg",
+    });
+    data.append("upload_preset", preset_name);
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
+        {
+          method: "POST",
+          body: data,
+        }
+      );
+
+      const file = await response.json();
+      const urlSubida = file.secure_url;
+
+      // Actualizamos la imagen en Firebase directamente con la URL recibida
+      if (user) {
+        try {
+          const refDoc = doc(db, "Usuarios", user.uid);
+          await updateDoc(refDoc, { fotoperfil: urlSubida });
+        } catch (error) {
+          Alert.alert("Error", "No se pudo actualizar la foto de perfil");
+        }
+      }
+
+      setFotoPerfil(urlSubida);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      Alert.alert("Error", "No se pudo subir la imagen");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView style={styles.mainContainer} behavior="height">
       <View style={styles.header}>
@@ -127,16 +211,22 @@ export default function Perfil() {
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <Image
           source={{
-            uri: fotoPerfil || "https://i.pinimg.com/222x/57/70/f0/5770f01a32c3c53e90ecda61483ccb08.jpg",
+            uri:
+              fotoPerfil ||
+              "https://i.pinimg.com/222x/57/70/f0/5770f01a32c3c53e90ecda61483ccb08.jpg",
           }}
           style={styles.image}
         />
 
-        <Button style={styles.botonCambiarFoto} title="Cambiar foto" />
+        <Button
+          style={styles.botonCambiarFoto}
+          title="Cambiar foto"
+          onPress={pickImage}
+        />
 
         <Text style={styles.nombre}>{nombre}</Text>
         <Text style={styles.totalFotos}>Total fotos subidas:</Text>
-        <Text style={styles.numeroFotos}>10</Text>
+        <Text style={styles.numeroFotos}>{fotos}</Text>
 
         <View style={styles.opciones}>
           <Text style={styles.titulo}>Correo electrónico:</Text>
