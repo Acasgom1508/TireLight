@@ -118,6 +118,14 @@ export default function InicioSesion() {
             </TouchableOpacity>
           </View>
 
+          <TouchableOpacity
+            style={{ marginTop: height * 0.015 }}
+            onPress={() => navigation.navigate("RecuperarCont")}
+          >
+            <Text style={styles.preguntaCont}>¿Olvidaste tu contraseña?</Text>
+          </TouchableOpacity>
+
+          {/* Si esta cargando, aparece un indicador */}
           {cargando ? (
             <ActivityIndicator
               size="large"
@@ -194,7 +202,7 @@ const styles = StyleSheet.create({
   boton: {
     backgroundColor: "#1E205B",
     borderRadius: width * 0.03,
-    marginTop: height * 0.03,
+    marginVertical: height * 0.03,
     width: width * 0.6,
     height: height * 0.07,
     flexDirection: "row",
@@ -234,10 +242,16 @@ const styles = StyleSheet.create({
   pregunta: {
     fontSize: width * 0.045,
     color: "#1F1F25",
-    marginTop: height * 0.035,
     marginBottom: height * 0.015,
     textAlign: "center",
     fontWeight: "bold",
+  },
+
+  preguntaCont: {
+    fontSize: width * 0.045,
+    color: "#ED6D2F",
+    textAlign: "center",
+    
   },
 
   crearcuenta: {

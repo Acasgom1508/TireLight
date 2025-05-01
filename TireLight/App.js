@@ -10,6 +10,7 @@ import Concurso from "./screens/Concurso";
 import Fotos from "./screens/Fotos";
 import Administracion from "./screens/Administracion";
 import Perfil from "./screens/Perfil";
+import RecuperarCont from "./screens/RecuperarCont";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -34,6 +35,11 @@ export default function App() {
         <Stack.Screen
           name="Registro"
           component={Registro}
+          options={{ tabBarStyle: { display: "none" } }}
+        />
+        <Stack.Screen
+          name="RecuperarCont"
+          component={RecuperarCont}
           options={{ tabBarStyle: { display: "none" } }}
         />
         <Stack.Screen
