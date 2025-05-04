@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f2f2f2",
     alignItems: "center",
-    marginTop: height * 0.1,
+    marginTop: height * 0.06,
   },
 
   botonAtras: {
@@ -463,11 +463,13 @@ const styles = StyleSheet.create({
     borderBottomColor: "#D3D3D3",
     paddingBottom: height * 0.01,
   },
+  
   valor: {
     marginLeft: width * 0.02,
     fontSize: width * 0.05,
     flex: 1,
   },
+
   input: {
     marginLeft: width * 0.02,
     fontSize: width * 0.045,

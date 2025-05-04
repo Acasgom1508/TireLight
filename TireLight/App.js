@@ -11,6 +11,7 @@ import Fotos from "./screens/Fotos";
 import Administracion from "./screens/Administracion";
 import Perfil from "./screens/Perfil";
 import RecuperarCont from "./screens/RecuperarCont";
+import AnnadirFoto from "./screens/AnnadirFoto";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -45,6 +46,11 @@ export default function App() {
         <Stack.Screen
           name="Pantallas"
           component={Pantallas}
+          options={{ tabBarStyle: { display: "none" } }}
+        />
+        <Stack.Screen
+          name="AnnadirFoto"
+          component={AnnadirFoto}
           options={{ tabBarStyle: { display: "none" } }}
         />
       </Stack.Navigator>

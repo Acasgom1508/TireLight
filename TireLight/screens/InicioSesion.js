@@ -160,9 +160,9 @@ export default function InicioSesion() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
+    backgroundColor: "#f2f2f2",
     alignItems: "center",
-    backgroundColor: "#EFEFEF",
-    paddingTop: height * 0.05,
+    marginTop: height * 0.06,
   },
 
   logo: {
