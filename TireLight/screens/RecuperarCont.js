@@ -11,16 +11,34 @@ import {
   KeyboardAvoidingView,
 } from "react-native";
 import { useState } from "react";
-import Feather from "react-native-vector-icons/Feather";
 import { useNavigation } from "@react-navigation/native";
-import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore"; // Añadido para Firestore
+import { FIREBASE_AUTH} from "../FirebaseConfig";
+import { sendPasswordResetEmail } from "firebase/auth";
 
 const { width, height } = Dimensions.get("window");
 export default function RecuperarCont() {
   const [correo, setCorreo] = useState("");
   const [cargando, setCargando] = useState(false);
+  const navigation = useNavigation();
+
+  const enviarEmail = async (correo) => {
+    if (!correo) {
+      alert("Por favor, introduce un correo electrónico válido.");
+      return;
+    }
+
+    setCargando(true);
+    try {
+      await sendPasswordResetEmail(FIREBASE_AUTH, correo);
+      alert("Se ha enviado un correo para restablecer la contraseña.");
+      setCargando(false);
+      navigation.navigate("InicioSesion");
+    } catch (error) {
+      console.error(error);
+      setCargando(false);
+      alert("Error al enviar el correo. Verifica que el correo sea correcto.");
+    }
+  };
 
   return (
     <View style={styles.mainContainer}>
@@ -51,7 +69,10 @@ export default function RecuperarCont() {
               style={{ marginVertical: width * 0.064 }}
             />
           ) : (
-            <TouchableOpacity style={styles.boton}>
+            <TouchableOpacity
+              style={styles.boton}
+              onPress={() => enviarEmail(correo)}
+            >
               <Text style={styles.textoBoton}>Enviar correo</Text>
             </TouchableOpacity>
           )}
@@ -122,14 +143,6 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
 
-  textoBotonCrear: {
-    fontSize: width * 0.06,
-    color: "#ED6D2F",
-    fontWeight: "bold",
-    marginTop: -2,
-    marginRight: width * 0.03,
-  },
-
   input: {
     width: width * 0.8,
     height: height * 0.07,
@@ -140,32 +153,5 @@ const styles = StyleSheet.create({
     color: "#404040",
     borderWidth: 2,
     borderColor: "#1E205B",
-  },
-
-  pregunta: {
-    fontSize: width * 0.045,
-    color: "#1F1F25",
-    marginBottom: height * 0.015,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-
-  preguntaCont: {
-    fontSize: width * 0.045,
-    color: "#ED6D2F",
-    textAlign: "center",
-  },
-
-  crearcuenta: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: width * 0.03,
-    width: width * 0.7,
-    height: height * 0.07,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-    borderWidth: 3,
-    borderColor: "#ED6D2F",
   },
 });
