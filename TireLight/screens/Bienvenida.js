@@ -24,12 +24,10 @@ export default function Bienvenida() {
       />
       <View style={styles.container}>
         <Text style={styles.titulo}>
-          El Rally Fotográfico TireLight llega a Sevilla
+          Descubre el nuevo Rally Fotográfico del mundo del motor, TireLight
         </Text>
         <Text style={styles.subtitulo}>
-          Cada año, una nueva ciudad se convierte en el escenario del mejor
-          tuning. Captura su esencia y únete al rally donde la fotografía y la
-          personalización se encuentran.
+          Cada mes, una nueva temática te espera. Captura su esencia y únete al rally donde la fotografía y el mundo del motor se encuentran.
         </Text>
         <Image
           source={require("../assets/images/Bienvenida/Supra-Bienvenida.png")}

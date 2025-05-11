@@ -80,8 +80,6 @@ function Pantallas({ route }) {
             case "Perfil":
               iconName = "user";
               break;
-            default:
-              iconName = "circle"; // Default icon if needed
           }
 
           return (

@@ -8,16 +8,34 @@ exports.restarUnDia = functions.pubsub
     const tematicasRef = admin.firestore().collection("Tematicas");
     const snapshot = await tematicasRef.get();
 
-    const promises = snapshot.docs.map(async (doc) => {
+    const docs = snapshot.docs;
+    const promises = [];
+
+    for (let i = 0; i < docs.length; i++) {
+      const doc = docs[i];
       const data = doc.data();
-      if (data.Seleccionado === "Si") {
-        if (data.Duracion > -3) {
-          await doc.ref.update({ Duracion: data.Duracion - 1 });
-        }else{
-          await doc.ref.update({ Seleccionado: "No" });
+
+      if (data.Seleccionado === "Si" || data.Seleccionado === "AG") {
+        const newDuracion = data.Duracion - 1;
+        promises.push(doc.ref.update({ Duracion: newDuracion }));
+
+        if (newDuracion < 0 && newDuracion > -3) {
+          promises.push(doc.ref.update({ Seleccionado: "AG" }));
+
+          // Elegir un documento aleatorio distinto al actual
+          const otrosDocs = docs.filter((_, index) => index !== i);
+          if (otrosDocs.length > 0) {
+            const randomDoc = otrosDocs[Math.floor(Math.random() * otrosDocs.length)];
+            promises.push(randomDoc.ref.update({
+              Seleccionado: "Si",
+              Duracion: 20
+            }));
+          }
+        } else if (newDuracion <= -3) {
+          promises.push(doc.ref.update({ Seleccionado: "No" }));
         }
       }
-    });
+    }
 
     await Promise.all(promises);
 

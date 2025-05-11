@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import { useNavigation } from "@react-navigation/native";
 
@@ -19,6 +19,7 @@ export default function Concurso() {
   // UseStates de los diferentes campos
   const [nombre, setNombre] = useState(null);
   const [fotoPerfil, setFotoPerfil] = useState(null);
+  const [tematica, setTematica] = useState(null);
 
   // Firebase
   const auth = FIREBASE_AUTH;
@@ -49,10 +50,38 @@ export default function Concurso() {
     }
   }, []);
 
+  // Cargamos la temática actual
+  useEffect(() => {
+    const cargarTematicasSeleccionadas = async () => {
+      try {
+        const refCollection = collection(db, "Tematicas");
+        const querySnapshot = await getDocs(refCollection);
+        const tematicasSeleccionadas = querySnapshot.docs
+          .filter((doc) => doc.data().Seleccionado === "Si")
+          .map((doc) => ({ id: doc.id, ...doc.data() }));
+        setTematica(tematicasSeleccionadas);
+      } catch (error) {
+        console.error("Error al cargar las temáticas seleccionadas:", error);
+        Alert.alert(
+          "Error",
+          "No se pudieron cargar las temáticas seleccionadas."
+        );
+      }
+    };
+
+    cargarTematicasSeleccionadas();
+  }, []);
+
   return (
     <View style={styles.mainContainer}>
-
-      <View style={{ flexDirection: "row", alignItems: "center", marginRight: width * 0.3, marginTop: height * 0.02 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginRight: height * 0.1,
+          marginTop: height * 0.02,
+        }}
+      >
         <Image
           source={{
             uri:
@@ -64,10 +93,21 @@ export default function Concurso() {
         <Text style={styles.bienvenida}>Bienvenido {nombre}</Text>
       </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate("AnnadirFoto")}>
-        <Text>Añadir foto</Text>
-        <Feather name="plus" size={20} color="#000" />
+      <TouchableOpacity
+        style={styles.botonAnnadir}
+        onPress={() => navigation.navigate("AnnadirFoto")}
+      >
+        <Feather name="plus" size={25} color="#fff" />
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.botonBases}>
+        <Feather name="info" size={25} color="#1E205B" />
+      </TouchableOpacity>
+
+      {/* Antiguo ganador */}
+
+      {/* Temática actual */}
+
       <StatusBar style="auto" />
     </View>
   );
@@ -112,5 +152,26 @@ const styles = StyleSheet.create({
     fontSize: width * 0.05,
     color: "#1E205B",
     marginBottom: height * 0.02,
+  },
+
+  botonAnnadir: {
+    position: "absolute",
+    bottom: height * 0.05,
+    right: width * 0.1,
+    width: width * 0.15,
+    height: width * 0.15,
+    backgroundColor: "#1E205B",
+    borderRadius: width * 0.25,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+  },
+
+  botonBases: {
+    position: "absolute",
+    top: height * 0.04,
+    right: width * 0.14,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
