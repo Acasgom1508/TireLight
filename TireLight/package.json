@@ -10,20 +10,20 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
-    "@react-native-firebase/firestore": "^21.12.0",
     "@react-navigation/bottom-tabs": "^7.2.1",
     "@react-navigation/native": "^7.0.15",
     "@react-navigation/stack": "^7.1.2",
     "expo": "~52.0.46",
     "expo-image-picker": "~16.0.6",
     "expo-status-bar": "~2.0.1",
-    "firebase": "^11.4.0",
+    "firebase": "^11.6.1",
     "install": "^0.13.0",
     "npm": "^11.2.0",
     "property-expr": "^2.0.6",
     "react": "18.3.1",
     "react-native": "0.76.9",
-    "react-native-vector-icons": "^10.2.0"
+    "react-native-vector-icons": "^10.2.0",
+    "expo-splash-screen": "~0.29.24"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

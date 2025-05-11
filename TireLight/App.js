@@ -67,20 +67,21 @@ function Pantallas({ route }) {
         tabBarIcon: ({ focused }) => {
           let iconName;
 
-          if (route.name === "Perfil") {
-            iconName = "user";
-          }
-
-          if (route.name === "Concurso") {
-            iconName = "camera";
-          }
-
-          if (route.name === "Fotos") {
-            iconName = "image";
-          }
-
-          if (route.name === "Administracion") {
-            iconName = "settings";
+          switch (route.name) {
+            case "Concurso":
+              iconName = "camera";
+              break;
+            case "Fotos":
+              iconName = "image";
+              break;
+            case "Administracion":
+              iconName = "settings";
+              break;
+            case "Perfil":
+              iconName = "user";
+              break;
+            default:
+              iconName = "circle"; // Default icon if needed
           }
 
           return (

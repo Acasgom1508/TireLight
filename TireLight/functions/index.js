@@ -14,7 +14,7 @@ exports.restarUnDia = functions.pubsub
         if (data.Duracion > -3) {
           await doc.ref.update({ Duracion: data.Duracion - 1 });
         }else{
-          data.Seleccionado = "No";
+          await doc.ref.update({ Seleccionado: "No" });
         }
       }
     });

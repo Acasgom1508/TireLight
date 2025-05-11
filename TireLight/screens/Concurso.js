@@ -7,13 +7,9 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
-  TextInput,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  ScrollView,
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import { useNavigation } from "@react-navigation/native";
 
@@ -44,6 +40,7 @@ export default function Concurso() {
             setNombre(datos.nombre);
           }
         } catch (error) {
+          console.error("Error al cargar los datos del usuario:", error);
           Alert.alert("Error", "No se pudieron cargar los datos del usuario.");
         }
       };
