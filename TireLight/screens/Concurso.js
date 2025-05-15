@@ -10,6 +10,7 @@ import {
   Modal,
   Alert,
   ScrollView,
+  TextInput,
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
@@ -24,7 +25,11 @@ export default function Concurso() {
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [tematica, setTematica] = useState(null);
   const [antiguaTematica, setAntiguaTematica] = useState(null);
-  const [antiguoGanador, setAntiguoGanador] = useState(null);
+  const [agUsuario, setAgUsuario] = useState(null);
+  const [agFoto, setAgFoto] = useState(null);
+  const [agVotos, setAgVotos] = useState(null);
+  const [agFecha, setAgFecha] = useState(null);
+  const [agTitulo, setAgTitulo] = useState(null);
   const [imagenesTematica, setImagenesTematica] = useState([]);
   const [bases, setBases] = useState(null);
   const [votos, setVotos] = useState(null);
@@ -87,6 +92,7 @@ export default function Concurso() {
             .map((doc) => {
               const data = doc.data();
               return {
+                usuario: data.Usuario,
                 url: data.Url,
                 titulo: data.Titulo,
                 fecha: data.Fecha,
@@ -103,6 +109,31 @@ export default function Concurso() {
     };
 
     cargarTematicasYFotos();
+  }, []);
+
+  // Cargamos la foto ganadora de la temática anterior
+  useEffect(() => {
+    const cargarDatosAG = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "Fotos"));
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.Tematica === antiguaTematica) {
+            setAgUsuario(data.Usuario);
+            setAgFoto(data.Url);
+            setAgVotos(data.Votos);
+            setAgFecha(data.Fecha);
+            setAgTitulo(data.Titulo);
+          }
+        });
+      } catch (error) {
+        console.error("Error al cargar datos AG:", error);
+        Alert.alert("Error", "No se pudieron cargar los datos AG.");
+      }
+    };
+
+    cargarDatosAG();
   }, []);
 
   return (
@@ -175,6 +206,22 @@ export default function Concurso() {
           </Text>
         </View>
 
+        <View style={styles.fotoContainer}>
+          <Image source={{ uri: agFoto }} style={styles.fotoRallyUsuario} />
+          <View style={{ marginLeft: 10 }}>
+            <Text style={styles.tituloFoto}>{agTitulo}</Text>
+            <Text style={styles.subtituloFoto}>
+              <Text style={{ fontWeight: "bold" }}>Usuario: </Text>
+              {agUsuario}
+            </Text>
+            <Text style={styles.subtituloFoto}>
+              <Text style={{ fontWeight: "bold" }}>Fecha: </Text>
+              {agFecha}
+            </Text>
+          </View>
+          <Text style={styles.votosFoto}>{agVotos}</Text>
+        </View>
+
         {/* Temática actual */}
         <View style={styles.encabezado}>
           <Text style={styles.textoEncabezado}>
@@ -186,19 +233,40 @@ export default function Concurso() {
             <View style={styles.fotoContainer} key={index}>
               <Image
                 source={{ uri: foto.url }}
-                style={{
-                  width: width * 0.75,
-                  height: height * 0.2,
-                  borderRadius: 10,
-                  marginBottom: 10,
-                  alignSelf: "center",
-                  borderWidth: 1,
-                  borderColor: "#9B9B9B",
-                }}
+                style={styles.fotoRallyUsuario}
               />
-              <Text style={{ fontWeight: "bold" }}>Título: {foto.titulo}</Text>
-              <Text>Fecha: {foto.fecha}</Text>
-              <Text>Votos: {foto.votos}</Text>
+              <View style={{ marginLeft: 10 }}>
+                <Text style={styles.tituloFoto}>{foto.titulo}</Text>
+                <Text style={styles.subtituloFoto}>
+                  <Text style={{ fontWeight: "bold" }}>Usuario: </Text>
+                  {foto.usuario}
+                </Text>
+                <Text style={styles.subtituloFoto}>
+                  <Text style={{ fontWeight: "bold" }}>Fecha: </Text>
+                  {foto.fecha}
+                </Text>
+              </View>
+
+              <Text style={styles.votosFoto}>{foto.votos}</Text>
+
+              <TouchableOpacity
+                style={{
+                  position: "absolute",
+                  backgroundColor: "#1E205B",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: 15,
+                  borderRadius: 15,
+                  top: 10,
+                  right: 10,
+                }}
+                onPress={() => {
+                  // Añadirle 1 a los votos de la foto
+                }}
+              >
+                <Feather name="thumbs-up" size={25} color="white" />
+              </TouchableOpacity>
             </View>
           ))
         ) : (
@@ -258,6 +326,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 5,
+    zIndex: 999, // para que esté por encima de otros elementos
   },
 
   botonBases: {
@@ -322,8 +391,45 @@ const styles = StyleSheet.create({
   fotoContainer: {
     backgroundColor: "#fff",
     borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
+    paddingBottom: 15,
     marginBottom: 15,
+  },
+
+  fotoRallyUsuario: {
+    width: "100%",
+    height: height * 0.25,
+    borderTopRightRadius: 10,
+    borderTopLeftRadius: 10,
+    marginBottom: 10,
+    alignSelf: "center",
+  },
+
+  tituloFoto: {
+    fontWeight: "bold",
+    color: "#ED6D2F",
+    fontSize: width * 0.05,
+    marginBottom: 5,
+  },
+
+  subtituloFoto: {
+    fontSize: width * 0.04,
+    color: "#1E205B",
+  },
+
+  votosFoto: {
+    position: "absolute",
+    color: "#fff",
+    backgroundColor: "#ED6D2F",
+    fontWeight: "bold",
+    fontSize: width * 0.08,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 3,
+    paddingHorizontal: 15,
+    borderTopLeftRadius: 10,
+    borderBottomRightRadius: 15,
+    top: 0,
+    left: 0,
   },
 });
