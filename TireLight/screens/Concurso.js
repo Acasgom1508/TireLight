@@ -13,7 +13,13 @@ import {
   TextInput,
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import { useNavigation } from "@react-navigation/native";
 
@@ -35,6 +41,7 @@ export default function Concurso() {
   const [votos, setVotos] = useState(null);
   const [fecha, setFecha] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [numeroVotados, setNumeroVotados] = useState(0);
 
   // Firebase
   const auth = FIREBASE_AUTH;
@@ -97,6 +104,7 @@ export default function Concurso() {
                 titulo: data.Titulo,
                 fecha: data.Fecha,
                 votos: data.Votos,
+                id: doc.id,
               };
             });
 
@@ -113,6 +121,8 @@ export default function Concurso() {
 
   // Cargamos la foto ganadora de la temática anterior
   useEffect(() => {
+    if (!antiguaTematica) return; // No hacer nada si aún no está definida
+
     const cargarDatosAG = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "Fotos"));
@@ -134,7 +144,41 @@ export default function Concurso() {
     };
 
     cargarDatosAG();
-  }, []);
+  }, [antiguaTematica]);
+
+  // Sumar votos a una foto y actualizar
+  const sumarVotos = async (fotoId, votos) => {
+    if (numeroVotados >= 10) {
+      Alert.alert(
+        "Límite de votos alcanzado",
+        "Ya has votado 3 veces. No puedes votar más.",
+        [{ text: "OK" }]
+      );
+    } else {
+      try {
+        const fotoRef = doc(db, "Fotos", fotoId);
+        const nuevosVotos = votos + 1;
+
+        // Se actualizar en Firestore
+        await updateDoc(fotoRef, {
+          Votos: nuevosVotos,
+        });
+
+        // Se actualizat el estado local. Prev es el estado anterior de la variable
+        setImagenesTematica((prev) =>
+          prev.map((foto) =>
+            // Si la foto coincide con la que se ha votado, se le actualiza el número de votos
+            foto.id === fotoId ? { ...foto, votos: nuevosVotos } : foto
+          )
+        );
+        setNumeroVotados((prev) => prev + 1);
+        Alert.alert("Éxito", "Has votado con éxito, te quedan " + (9 - numeroVotados) + " votos.");
+      } catch (error) {
+        console.error("Error al sumar votos:", error);
+        Alert.alert("Error", "No se pudieron sumar los votos.");
+      }
+    }
+  };
 
   return (
     <View style={styles.mainContainer}>
@@ -143,7 +187,8 @@ export default function Concurso() {
           flexDirection: "row",
           alignItems: "center",
           marginRight: height * 0.1,
-          marginTop: height * 0.02,
+          paddingLeft: width * 0.05,
+          paddingBottom: height * 0.04,
         }}
       >
         <Image
@@ -200,33 +245,38 @@ export default function Concurso() {
 
       <ScrollView style={styles.scrollViewFotos}>
         {/* Antiguo ganador */}
-        <View style={styles.encabezado}>
-          <Text style={styles.textoEncabezado}>
-            Temática anterior: {antiguaTematica}
-          </Text>
-        </View>
 
-        <View style={styles.fotoContainer}>
-          <Image source={{ uri: agFoto }} style={styles.fotoRallyUsuario} />
-          <View style={{ marginLeft: 10 }}>
-            <Text style={styles.tituloFoto}>{agTitulo}</Text>
-            <Text style={styles.subtituloFoto}>
-              <Text style={{ fontWeight: "bold" }}>Usuario: </Text>
-              {agUsuario}
-            </Text>
-            <Text style={styles.subtituloFoto}>
-              <Text style={{ fontWeight: "bold" }}>Fecha: </Text>
-              {agFecha}
-            </Text>
+        {antiguaTematica ? (
+          <View>
+            <View style={styles.encabezado}>
+              <Text style={styles.textoEncabezado}>
+                Ganador "{antiguaTematica}"
+              </Text>
+            </View>
+
+            <View style={styles.fotoContainer}>
+              <Image source={{ uri: agFoto }} style={styles.fotoRallyUsuario} />
+              <View style={{ marginLeft: 10 }}>
+                <Text style={styles.tituloFoto}>{agTitulo}</Text>
+                <Text style={styles.subtituloFoto}>
+                  <Text style={{ fontWeight: "bold" }}>Usuario: </Text>
+                  {agUsuario}
+                </Text>
+                <Text style={styles.subtituloFoto}>
+                  <Text style={{ fontWeight: "bold" }}>Fecha: </Text>
+                  {agFecha}
+                </Text>
+              </View>
+              <Text style={styles.votosFoto}>{agVotos}</Text>
+            </View>
           </View>
-          <Text style={styles.votosFoto}>{agVotos}</Text>
-        </View>
+        ) : (
+          <View />
+        )}
 
         {/* Temática actual */}
         <View style={styles.encabezado}>
-          <Text style={styles.textoEncabezado}>
-            Temática actual: {tematica}
-          </Text>
+          <Text style={styles.textoEncabezado}>{tematica}</Text>
         </View>
         {imagenesTematica.length > 0 ? (
           imagenesTematica.map((foto, index) => (
@@ -253,6 +303,8 @@ export default function Concurso() {
                 style={{
                   position: "absolute",
                   backgroundColor: "#1E205B",
+                  borderWidth: 1,
+                  borderColor: "#C2C2C2",
                   flexDirection: "row",
                   justifyContent: "center",
                   alignItems: "center",
@@ -262,7 +314,7 @@ export default function Concurso() {
                   right: 10,
                 }}
                 onPress={() => {
-                  // Añadirle 1 a los votos de la foto
+                  sumarVotos(foto.id, foto.votos);
                 }}
               >
                 <Feather name="thumbs-up" size={25} color="white" />
@@ -291,14 +343,22 @@ const styles = StyleSheet.create({
 
   encabezado: {
     flexDirection: "row",
-    width: "100%",
-    height: height * 0.07,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#ED6D2F",
+    marginBottom: 10,
+    marginTop: 15,
   },
 
   textoEncabezado: {
-    fontSize: width * 0.05,
+    fontSize: width * 0.06,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    width: "100%",
   },
 
   imagen: {
@@ -308,11 +368,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#9B9B9B",
     marginRight: width * 0.03,
+    position: "absolute",
+    top: height * 0.01,
+    left: width * -0.3,
   },
 
   bienvenida: {
     fontSize: width * 0.05,
     color: "#1E205B",
+    position: "absolute",
+    top: height * 0.03,
+    left: width * -0.13,
   },
 
   botonAnnadir: {
@@ -331,7 +397,7 @@ const styles = StyleSheet.create({
 
   botonBases: {
     position: "absolute",
-    top: height * 0.037,
+    top: height * 0.028,
     right: width * 0.09,
     justifyContent: "center",
     alignItems: "center",
@@ -384,6 +450,7 @@ const styles = StyleSheet.create({
 
   scrollViewFotos: {
     alignSelf: "center",
+    marginTop: height * 0.07,
     paddingHorizontal: width * 0.03,
     marginVertical: height * 0.02,
   },
