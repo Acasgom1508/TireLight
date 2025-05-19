@@ -106,7 +106,7 @@ export default function AnnadirFoto() {
         >
           <Feather name="chevron-left" size={30} color="black" />
         </TouchableOpacity>
-        <Text style={styles.textoHeader}>Añadir foto</Text>
+        <Text style={styles.textoHeader}>Publicar foto</Text>
       </View>
 
       {/* Boton añadir foto o foto */}
@@ -127,26 +127,28 @@ export default function AnnadirFoto() {
           source={{ uri: foto }}
           style={{
             width: "90%",
-            height: "20%",
+            height: height * 0.25,
             borderRadius: 10,
             marginVertical: height * 0.03,
+            marginTop: height * 0.05,
           }}
         />
       )}
 
-      <TextInput style={styles.input} placeholder="Titulo" />
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "90%",
+        }}
+      >
+        <TextInput style={styles.input} placeholder="Titulo" />
 
-      <TouchableOpacity style={styles.botonAnnadir}>
-        <Feather
-          name="plus"
-          size={26}
-          color="#333"
-          style={{ marginRight: 10 }}
-        />
-        <Text style={{ fontSize: 18, fontWeight: "600", color: "#333" }}>
-          Añadir
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.botonAnnadir}>
+          <Feather name="send" size={25} color="#1E205B" style={{ margin: 10 }} />
+        </TouchableOpacity>
+      </View>
 
       <StatusBar style="auto" />
     </View>
@@ -181,20 +183,23 @@ const styles = StyleSheet.create({
   botonAnnadirFoto: {
     backgroundColor: "#e0e0e0",
     borderRadius: 10,
-    marginVertical: height * 0.03,
-    width: width * 0.8,
-    height: height * 0.12,
+    marginTop: height * 0.05,
+    marginBottom: height * 0.03,
+    width: "90%",
+    height: height * 0.25,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
 
   input: {
-    width: "80%",
+    width: "85%",
     height: height * 0.06,
     fontSize: 18,
-    borderColor: "#ccc",
-    borderWidth: 1,
+    color: "#404040",
+    borderWidth: 2,
+    borderColor: "#1E205B",
+    backgroundColor: "#F0F0F0",
     borderRadius: 10,
     paddingHorizontal: 10,
     marginVertical: height * 0.015,
@@ -202,10 +207,10 @@ const styles = StyleSheet.create({
 
   botonAnnadir: {
     backgroundColor: "#ED6D2F",
-    borderRadius: 10,
-    marginTop: height * 0.03,
-    width: width * 0.6,
-    height: height * 0.07,
+    borderRadius: 30,
+    width: "15%",
+    height: height * 0.06,
+    marginLeft: height * 0.01,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
