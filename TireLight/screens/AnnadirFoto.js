@@ -10,10 +10,12 @@ import {
   TextInput,
   ActivityIndicator,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import {
   doc,
+  addDoc,
   getDoc,
   updateDoc,
   collection,
@@ -27,8 +29,13 @@ const { width, height } = Dimensions.get("window");
 
 export default function AnnadirFoto() {
   const navigation = useNavigation();
+  const route = useRoute();
+  // recogemos el nombre de usuario de la pantalla anterior
+  const { nombreUsuario } = route.params;
+  const { tematica } = route.params;
 
   const [foto, setFoto] = useState(null);
+  const [titulo, setTitulo] = useState(null);
 
   // Firebase
   const auth = FIREBASE_AUTH;
@@ -39,6 +46,12 @@ export default function AnnadirFoto() {
   const cloud_name = "dai0shknj";
   const preset_name = "prueba";
   const [loading, setLoading] = useState(false);
+
+  // Fecha de hoy
+  const fechaActual = new Date();
+  const fechaFormateada = `${fechaActual.getDate()}/${
+    fechaActual.getMonth() + 1
+  }/${fechaActual.getFullYear()}`;
 
   // Función para abrir la galería y seleccionar una imagen
   const pickImage = async () => {
@@ -97,6 +110,29 @@ export default function AnnadirFoto() {
     }
   };
 
+  const subirFoto = async () => {
+    if (!foto) {
+      Alert.alert("Error", "Debes seleccionar una foto");
+      return;
+    } else if (!titulo) {
+      Alert.alert("Error", "Debes añadir un título");
+      return;
+    }
+
+    await addDoc(collection(FIREBASE_DB, "Fotos"), {
+      Titulo: titulo,
+      Tematica: tematica,
+      Usuario: nombreUsuario,
+      Url: foto,
+      Fecha: fechaFormateada,
+      Votos: 0,
+      Estado: "Pendiente",
+    });
+
+    Alert.alert("Pendiente de aceptación", "Tu imagen se ha guardado correctamente. Espera a que un administrador la acepte para que se muestre en la pantalla principal.");
+    navigation.goBack();
+  };
+
   return (
     <View style={styles.mainContainer}>
       <View style={styles.header}>
@@ -129,11 +165,16 @@ export default function AnnadirFoto() {
             width: "90%",
             height: height * 0.25,
             borderRadius: 10,
-            marginVertical: height * 0.03,
+            marginBottom: height * 0.02,
             marginTop: height * 0.05,
           }}
         />
       )}
+
+      <Text style={styles.textoInformativo}>
+        La imagen añadida no se mostrará en la pantalla principal hasta que un
+        administrador la acepte
+      </Text>
 
       <View
         style={{
@@ -143,10 +184,20 @@ export default function AnnadirFoto() {
           width: "90%",
         }}
       >
-        <TextInput style={styles.input} placeholder="Titulo" />
+        <TextInput
+          style={styles.input}
+          placeholder="Titulo"
+          value={titulo}
+          onChangeText={setTitulo}
+        />
 
-        <TouchableOpacity style={styles.botonAnnadir}>
-          <Feather name="send" size={25} color="#1E205B" style={{ margin: 10 }} />
+        <TouchableOpacity style={styles.botonAnnadir} onPress={subirFoto}>
+          <Feather
+            name="send"
+            size={25}
+            color="#1E205B"
+            style={{ margin: 10 }}
+          />
         </TouchableOpacity>
       </View>
 
@@ -215,5 +266,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
+  },
+
+  textoInformativo: {
+    fontSize: 14,
+    color: "#404040",
+    textAlign: "center",
+    marginBottom: height * 0.02,
+    width: "90%",
   },
 });

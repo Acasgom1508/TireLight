@@ -205,7 +205,7 @@ export default function Concurso() {
       {/* Boton añadir foto */}
       <TouchableOpacity
         style={styles.botonAnnadir}
-        onPress={() => navigation.navigate("AnnadirFoto")}
+        onPress={() => navigation.navigate("AnnadirFoto",{nombreUsuario: nombre, tematica: tematica})}
       >
         <Feather name="plus" size={25} color="#fff" />
       </TouchableOpacity>
