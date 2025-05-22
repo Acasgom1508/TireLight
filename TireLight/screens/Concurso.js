@@ -10,7 +10,6 @@ import {
   Modal,
   Alert,
   ScrollView,
-  TextInput,
 } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 import {
@@ -19,6 +18,7 @@ import {
   updateDoc,
   collection,
   getDocs,
+  increment,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import { useNavigation } from "@react-navigation/native";
@@ -26,162 +26,147 @@ import { useNavigation } from "@react-navigation/native";
 const { width, height } = Dimensions.get("window");
 
 export default function Concurso() {
-  // UseStates de los diferentes campos
   const [nombre, setNombre] = useState(null);
   const [fotoPerfil, setFotoPerfil] = useState(null);
+  const [votosUsuario, setVotosUsuario] = useState(0);
   const [tematica, setTematica] = useState(null);
+  const [duracionTematica, setDuracionTematica] = useState(null);
   const [antiguaTematica, setAntiguaTematica] = useState(null);
   const [agUsuario, setAgUsuario] = useState(null);
   const [agFoto, setAgFoto] = useState(null);
-  const [agVotos, setAgVotos] = useState(null);
+  const [agVotos, setAgVotos] = useState(0);
   const [agFecha, setAgFecha] = useState(null);
   const [agTitulo, setAgTitulo] = useState(null);
   const [imagenesTematica, setImagenesTematica] = useState([]);
   const [bases, setBases] = useState(null);
-  const [votos, setVotos] = useState(null);
-  const [fecha, setFecha] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [numeroVotados, setNumeroVotados] = useState(0);
+  //const [numeroVotados, setNumeroVotados] = useState(0);
 
-  // Firebase
   const auth = FIREBASE_AUTH;
   const db = FIREBASE_DB;
   const user = auth.currentUser;
-
   const navigation = useNavigation();
 
-  //Actualizar datos usuario
+  // Cargamos datos usuario
   useEffect(() => {
-    if (user) {
-      const cargarDatosUsuario = async () => {
-        try {
-          const refDoc = doc(db, "Usuarios", user.uid);
-          const docSnap = await getDoc(refDoc);
-          if (docSnap.exists()) {
-            const datos = docSnap.data();
-            setFotoPerfil(datos.fotoperfil);
-            setNombre(datos.nombre);
-          }
-        } catch (error) {
-          console.error("Error al cargar los datos del usuario:", error);
-          Alert.alert("Error", "No se pudieron cargar los datos del usuario.");
+    if (!user) return;
+    (async () => {
+      try {
+        const refDoc = doc(db, "Usuarios", user.uid);
+        const snap = await getDoc(refDoc);
+        if (snap.exists()) {
+          const datos = snap.data();
+          setFotoPerfil(datos.fotoperfil);
+          setNombre(datos.nombre);
+          setVotosUsuario(datos.Votos || 0);
         }
-      };
-
-      cargarDatosUsuario();
-    }
+      } catch (e) {
+        console.error(e);
+        Alert.alert("Error", "No se pudieron cargar los datos del usuario.");
+      }
+    })();
   }, []);
 
-  // Cargamos la temática actual
+  // Cargamos temática e imágenes
   useEffect(() => {
-    const cargarTematicasYFotos = async () => {
+    (async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "Tematicas"));
-        let tematicaActual = null;
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.Seleccionado === "Si") {
-            setTematica(data.Titulo);
-            setBases(data.Bases);
-            tematicaActual = data.Titulo;
-          } else if (data.Seleccionado === "AG") {
-            setAntiguaTematica(data.Titulo);
+        const snaps = await getDocs(collection(db, "Tematicas"));
+        let actual = null;
+        snaps.forEach((doc) => {
+          const d = doc.data();
+          if (d.Seleccionado === "Si") {
+            setTematica(d.Titulo);
+            setBases(d.Bases);
+            setDuracionTematica(d.Duracion);
+            actual = d.Titulo;
+          } else if (d.Seleccionado === "AG") {
+            setAntiguaTematica(d.Titulo);
           }
         });
-
-        // Si se ha encontrado la temática actual, cargar fotos
-        if (tematicaActual) {
-          const fotosSnapshot = await getDocs(collection(db, "Fotos"));
-
-          const imagenesFiltradas = fotosSnapshot.docs
-            .filter((doc) => doc.data().Tematica === tematicaActual)
-            .map((doc) => {
-              const data = doc.data();
-              return {
-                usuario: data.Usuario,
-                url: data.Url,
-                titulo: data.Titulo,
-                fecha: data.Fecha,
-                votos: data.Votos,
-                id: doc.id,
-              };
-            });
-
-          setImagenesTematica(imagenesFiltradas);
+        if (actual) {
+          const fotosSnap = await getDocs(collection(db, "Fotos"));
+          const imgs = fotosSnap.docs
+            .map((doc) => ({ id: doc.id, ...doc.data() }))
+            .filter((d) => d.Tematica === actual && d.Estado === "Aceptada")
+            .map((d) => ({
+              id: d.id,
+              usuario: d.Usuario,
+              url: d.Url,
+              titulo: d.Titulo,
+              fecha: d.Fecha,
+              votos: d.Votos || 0,
+            }));
+          setImagenesTematica(imgs);
         }
-      } catch (error) {
-        console.error("Error al cargar datos:", error);
+      } catch (e) {
+        console.error(e);
         Alert.alert("Error", "No se pudieron cargar las temáticas o imágenes.");
       }
-    };
-
-    cargarTematicasYFotos();
+    })();
   }, []);
 
-  // Cargamos la foto ganadora de la temática anterior
+  // Cargamos ganador anterior
   useEffect(() => {
-    if (!antiguaTematica) return; // No hacer nada si aún no está definida
-
-    const cargarDatosAG = async () => {
+    if (!antiguaTematica) return;
+    (async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "Fotos"));
-
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.Tematica === antiguaTematica) {
-            setAgUsuario(data.Usuario);
-            setAgFoto(data.Url);
-            setAgVotos(data.Votos);
-            setAgFecha(data.Fecha);
-            setAgTitulo(data.Titulo);
+        const snaps = await getDocs(collection(db, "Fotos"));
+        snaps.forEach((doc) => {
+          const d = doc.data();
+          if (d.Tematica === antiguaTematica) {
+            setAgUsuario(d.Usuario);
+            setAgFoto(d.Url);
+            setAgVotos(d.Votos || 0);
+            setAgFecha(d.Fecha);
+            setAgTitulo(d.Titulo);
           }
         });
-      } catch (error) {
-        console.error("Error al cargar datos AG:", error);
-        Alert.alert("Error", "No se pudieron cargar los datos AG.");
+      } catch (e) {
+        console.error(e);
+        Alert.alert("Error", "No se pudieron cargar los datos del ganador.");
       }
-    };
-
-    cargarDatosAG();
+    })();
   }, [antiguaTematica]);
 
-  // Sumar votos a una foto y actualizar
-  const sumarVotos = async (fotoId, votos) => {
-    if (numeroVotados >= 10) {
-      Alert.alert(
-        "Límite de votos alcanzado",
-        "Ya has votado 3 veces. No puedes votar más.",
-        [{ text: "OK" }]
+  // Función de voto
+  const sumarVotos = async (fotoId, votosActuales) => {
+    if (votosUsuario = 0) {
+      return Alert.alert(
+        "Límite alcanzado",
+        `Ya has usado tus 20 votos.`
       );
-    } else {
-      try {
-        const fotoRef = doc(db, "Fotos", fotoId);
-        const nuevosVotos = votos + 1;
+    }
+    try {
+      const fotoRef = doc(db, "Fotos", fotoId);
+      const userRef = doc(db, "Usuarios", user.uid);
 
-        // Se actualizar en Firestore
-        await updateDoc(fotoRef, {
-          Votos: nuevosVotos,
-        });
+      // Actualizaciones atómicas
+      await updateDoc(fotoRef, { Votos: increment(1) });
+      await updateDoc(userRef, { Votos: increment(-1) });
 
-        // Se actualizat el estado local. Prev es el estado anterior de la variable
-        setImagenesTematica((prev) =>
-          prev.map((foto) =>
-            // Si la foto coincide con la que se ha votado, se le actualiza el número de votos
-            foto.id === fotoId ? { ...foto, votos: nuevosVotos } : foto
-          )
-        );
-        setNumeroVotados((prev) => prev + 1);
-        Alert.alert("Éxito", "Has votado con éxito, te quedan " + (9 - numeroVotados) + " votos.");
-      } catch (error) {
-        console.error("Error al sumar votos:", error);
-        Alert.alert("Error", "No se pudieron sumar los votos.");
-      }
+      // Actualizamos estado local
+      setImagenesTematica((prev) =>
+        prev.map((f) =>
+          f.id === fotoId ? { ...f, votos: votosActuales + 1 } : f
+        )
+      );
+
+      //setNumeroVotados((prev) => prev + 1);
+      const restantes = votosUsuario - 1;
+      Alert.alert(
+        "Éxito",
+        `Has votado. Te quedan ${restantes} voto${restantes === 1 ? "" : "s"}.`
+      );
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Error", "No se pudieron registrar los votos.");
     }
   };
 
   return (
     <View style={styles.mainContainer}>
+      {/* Cabecera usuario */}
       <View
         style={{
           flexDirection: "row",
@@ -202,15 +187,20 @@ export default function Concurso() {
         <Text style={styles.bienvenida}>Bienvenido {nombre}</Text>
       </View>
 
-      {/* Boton añadir foto */}
+      {/* Botón añadir */}
       <TouchableOpacity
         style={styles.botonAnnadir}
-        onPress={() => navigation.navigate("AnnadirFoto",{nombreUsuario: nombre, tematica: tematica})}
+        onPress={() =>
+          navigation.navigate("AnnadirFoto", {
+            nombreUsuario: nombre,
+            tematica,
+          })
+        }
       >
         <Feather name="plus" size={25} color="#fff" />
       </TouchableOpacity>
 
-      {/* Boton ver bases */}
+      {/* Botón info */}
       <TouchableOpacity
         style={styles.botonBases}
         onPress={() => setModalVisible(true)}
@@ -218,24 +208,20 @@ export default function Concurso() {
         <Feather name="info" size={35} color="#1E205B" />
       </TouchableOpacity>
 
-      {/* Modal que se ve al darle al boton de información */}
+      {/* Modal bases */}
       <Modal
         animationType="slide"
-        transparent={true}
+        transparent
         visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.contenedorModal}>
           <View style={styles.contenidoModal}>
             <Text style={styles.tituloModal}>Bases de la temática actual</Text>
-            <Text style={styles.textoModal}>
-              {bases || "No hay bases disponibles."}
-            </Text>
+            <Text style={styles.textoModal}>{bases || "No hay bases."}</Text>
             <TouchableOpacity
               style={styles.botonCerrar}
-              onPress={() => setModalVisible(!modalVisible)}
+              onPress={() => setModalVisible(false)}
             >
               <Text style={styles.textoBotonCerrar}>Cerrar</Text>
             </TouchableOpacity>
@@ -244,16 +230,14 @@ export default function Concurso() {
       </Modal>
 
       <ScrollView style={styles.scrollViewFotos}>
-        {/* Antiguo ganador */}
-
-        {antiguaTematica ? (
+        {/* Ganador anterior */}
+        {antiguaTematica && (
           <View>
             <View style={styles.encabezado}>
               <Text style={styles.textoEncabezado}>
                 Ganador "{antiguaTematica}"
               </Text>
             </View>
-
             <View style={styles.fotoContainer}>
               <Image source={{ uri: agFoto }} style={styles.fotoRallyUsuario} />
               <View style={{ marginLeft: 10 }}>
@@ -270,17 +254,23 @@ export default function Concurso() {
               <Text style={styles.votosFoto}>{agVotos}</Text>
             </View>
           </View>
-        ) : (
-          <View />
         )}
 
         {/* Temática actual */}
         <View style={styles.encabezado}>
           <Text style={styles.textoEncabezado}>{tematica}</Text>
         </View>
+        <View style={{ alignItems: "center", marginVertical: 10 }}>
+          <Text>
+            ⏳ {duracionTematica} día{duracionTematica === 1 ? "" : "s"}{" "}
+            restantes
+          </Text>
+        </View>
+
+        {/* Lista de fotos */}
         {imagenesTematica.length > 0 ? (
-          imagenesTematica.map((foto, index) => (
-            <View style={styles.fotoContainer} key={index}>
+          imagenesTematica.map((foto, i) => (
+            <View style={styles.fotoContainer} key={i}>
               <Image
                 source={{ uri: foto.url }}
                 style={styles.fotoRallyUsuario}
@@ -296,26 +286,10 @@ export default function Concurso() {
                   {foto.fecha}
                 </Text>
               </View>
-
               <Text style={styles.votosFoto}>{foto.votos}</Text>
-
               <TouchableOpacity
-                style={{
-                  position: "absolute",
-                  backgroundColor: "#1E205B",
-                  borderWidth: 1,
-                  borderColor: "#C2C2C2",
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding: 15,
-                  borderRadius: 15,
-                  top: 10,
-                  right: 10,
-                }}
-                onPress={() => {
-                  sumarVotos(foto.id, foto.votos);
-                }}
+                style={styles.botonVotar}
+                onPress={() => sumarVotos(foto.id, foto.votos)}
               >
                 <Feather name="thumbs-up" size={25} color="white" />
               </TouchableOpacity>
@@ -323,7 +297,7 @@ export default function Concurso() {
           ))
         ) : (
           <Text style={{ textAlign: "center", marginTop: 10 }}>
-            No hay imágenes para esta temática.
+            No hay imágenes.
           </Text>
         )}
       </ScrollView>
@@ -343,13 +317,11 @@ const styles = StyleSheet.create({
 
   encabezado: {
     flexDirection: "row",
-    paddingVertical: 7,
-    paddingHorizontal: 10,
+    padding: 7,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#ED6D2F",
-    marginBottom: 10,
     marginTop: 15,
   },
 
@@ -357,8 +329,6 @@ const styles = StyleSheet.create({
     fontSize: width * 0.06,
     fontWeight: "bold",
     color: "#fff",
-    textAlign: "center",
-    width: "100%",
   },
 
   imagen: {
@@ -367,7 +337,6 @@ const styles = StyleSheet.create({
     borderRadius: (width * 0.5) / 2,
     borderWidth: 1,
     borderColor: "#9B9B9B",
-    marginRight: width * 0.03,
     position: "absolute",
     top: height * 0.01,
     left: width * -0.3,
@@ -392,22 +361,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 5,
-    zIndex: 999, // para que esté por encima de otros elementos
   },
 
   botonBases: {
     position: "absolute",
     top: height * 0.028,
     right: width * 0.09,
-    justifyContent: "center",
-    alignItems: "center",
   },
 
   contenedorModal: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
 
   contenidoModal: {
@@ -416,41 +382,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
     elevation: 5,
   },
 
-  tituloModal: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
+  tituloModal: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
 
-  textoModal: {
-    fontSize: 16,
-    marginBottom: 20,
-  },
+  textoModal: { fontSize: 16, marginBottom: 20 },
 
-  botonCerrar: {
-    backgroundColor: "#1E205B",
-    borderRadius: 5,
-    padding: 10,
-  },
+  botonCerrar: { backgroundColor: "#1E205B", borderRadius: 5, padding: 10 },
 
-  textoBotonCerrar: {
-    color: "white",
-    fontSize: 16,
-  },
+  textoBotonCerrar: { color: "white", fontSize: 16 },
 
   scrollViewFotos: {
-    alignSelf: "center",
-    marginTop: height * 0.07,
+    width: "100%",
     paddingHorizontal: width * 0.03,
     marginVertical: height * 0.02,
   },
@@ -458,17 +402,15 @@ const styles = StyleSheet.create({
   fotoContainer: {
     backgroundColor: "#fff",
     borderRadius: 10,
-    paddingBottom: 15,
     marginBottom: 15,
+    paddingBottom: 15,
   },
 
   fotoRallyUsuario: {
     width: "100%",
     height: height * 0.25,
-    borderTopRightRadius: 10,
     borderTopLeftRadius: 10,
-    marginBottom: 10,
-    alignSelf: "center",
+    borderTopRightRadius: 10,
   },
 
   tituloFoto: {
@@ -478,25 +420,30 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
 
-  subtituloFoto: {
-    fontSize: width * 0.04,
-    color: "#1E205B",
-  },
+  subtituloFoto: { fontSize: width * 0.04, color: "#1E205B" },
 
   votosFoto: {
     position: "absolute",
-    color: "#fff",
+    top: 0,
+    left: 0,
     backgroundColor: "#ED6D2F",
+    color: "#fff",
     fontWeight: "bold",
     fontSize: width * 0.08,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
     paddingVertical: 3,
     paddingHorizontal: 15,
     borderTopLeftRadius: 10,
     borderBottomRightRadius: 15,
-    top: 0,
-    left: 0,
+  },
+
+  botonVotar: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "#1E205B",
+    borderWidth: 1,
+    borderColor: "#C2C2C2",
+    padding: 15,
+    borderRadius: 15,
   },
 });
