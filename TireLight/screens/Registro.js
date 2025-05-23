@@ -77,6 +77,7 @@ export default function Registro() {
         rol: "usuario",
         fotoperfil: "https://i.pinimg.com/222x/57/70/f0/5770f01a32c3c53e90ecda61483ccb08.jpg",
         fotos: 0,
+        Votos: 20,
       });
 
       console.log("Usuario registrado con UID:", user.uid);

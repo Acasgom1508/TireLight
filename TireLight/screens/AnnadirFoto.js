@@ -19,6 +19,7 @@ import {
   getDoc,
   updateDoc,
   collection,
+  increment,
   getDocs,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
@@ -36,6 +37,8 @@ export default function AnnadirFoto() {
 
   const [foto, setFoto] = useState(null);
   const [titulo, setTitulo] = useState(null);
+  const [fotosUsuario, setFotosUsuario] = useState(null);
+  const [fotosTematica, setFotosTematica] = useState(null);
 
   // Firebase
   const auth = FIREBASE_AUTH;
@@ -129,7 +132,14 @@ export default function AnnadirFoto() {
       Estado: "Pendiente",
     });
 
-    Alert.alert("Pendiente de aceptación", "Tu imagen se ha guardado correctamente. Espera a que un administrador la acepte para que se muestre en la pantalla principal.");
+    // Actualizar el número de fotos del usuario
+    const fotosUsu = doc(FIREBASE_DB, "Usuarios", user.uid);
+    await updateDoc(fotosUsu, { fotos: increment(1) });
+
+    Alert.alert(
+      "Pendiente de aceptación",
+      "Tu imagen se ha guardado correctamente. Espera a que un administrador la acepte para que se muestre en la pantalla principal."
+    );
     navigation.goBack();
   };
 

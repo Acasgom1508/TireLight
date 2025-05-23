@@ -29,16 +29,19 @@ export default function Concurso() {
   const [nombre, setNombre] = useState(null);
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [votosUsuario, setVotosUsuario] = useState(0);
+
   const [tematica, setTematica] = useState(null);
   const [duracionTematica, setDuracionTematica] = useState(null);
+  const [imagenesTematica, setImagenesTematica] = useState([]);
+  const [bases, setBases] = useState(null);
+
   const [antiguaTematica, setAntiguaTematica] = useState(null);
   const [agUsuario, setAgUsuario] = useState(null);
   const [agFoto, setAgFoto] = useState(null);
   const [agVotos, setAgVotos] = useState(0);
   const [agFecha, setAgFecha] = useState(null);
   const [agTitulo, setAgTitulo] = useState(null);
-  const [imagenesTematica, setImagenesTematica] = useState([]);
-  const [bases, setBases] = useState(null);
+
   const [modalVisible, setModalVisible] = useState(false);
   //const [numeroVotados, setNumeroVotados] = useState(0);
 
@@ -131,17 +134,13 @@ export default function Concurso() {
 
   // Función de voto
   const sumarVotos = async (fotoId, votosActuales) => {
-    if (votosUsuario = 0) {
-      return Alert.alert(
-        "Límite alcanzado",
-        `Ya has usado tus 20 votos.`
-      );
+    if (votosUsuario === 0) {
+      return Alert.alert("Límite alcanzado", `Ya has usado tus 20 votos.`);
     }
     try {
       const fotoRef = doc(db, "Fotos", fotoId);
       const userRef = doc(db, "Usuarios", user.uid);
 
-      // Actualizaciones atómicas
       await updateDoc(fotoRef, { Votos: increment(1) });
       await updateDoc(userRef, { Votos: increment(-1) });
 
@@ -151,12 +150,13 @@ export default function Concurso() {
           f.id === fotoId ? { ...f, votos: votosActuales + 1 } : f
         )
       );
+      setVotosUsuario((prev) => prev - 1);
 
-      //setNumeroVotados((prev) => prev + 1);
+      // Mostramos alerta con el número actualizado
       const restantes = votosUsuario - 1;
       Alert.alert(
-        "Éxito",
-        `Has votado. Te quedan ${restantes} voto${restantes === 1 ? "" : "s"}.`
+        "Has votado",
+        `Te quedan ${restantes} voto${restantes === 1 ? "" : "s"}.`
       );
     } catch (e) {
       console.error(e);
@@ -260,11 +260,23 @@ export default function Concurso() {
         <View style={styles.encabezado}>
           <Text style={styles.textoEncabezado}>{tematica}</Text>
         </View>
-        <View style={{ alignItems: "center", marginVertical: 10 }}>
-          <Text>
-            ⏳ {duracionTematica} día{duracionTematica === 1 ? "" : "s"}{" "}
-            restantes
-          </Text>
+        <View style={{ alignItems: "center" }}>
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: 10,
+              borderRadius: 50,
+              borderWidth: 1,
+              borderColor: "#ED6D2F",
+              padding: 10,
+              width: "50%",
+            }}
+          >
+            <Text>
+              ⏳ {duracionTematica} día{duracionTematica === 1 ? "" : "s"}{" "}
+              restantes
+            </Text>
+          </View>
         </View>
 
         {/* Lista de fotos */}
@@ -361,6 +373,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 5,
+    zIndex: 999,
   },
 
   botonBases: {
@@ -396,7 +409,8 @@ const styles = StyleSheet.create({
   scrollViewFotos: {
     width: "100%",
     paddingHorizontal: width * 0.03,
-    marginVertical: height * 0.02,
+    marginTop: height * 0.05,
+    marginBottom: 5,
   },
 
   fotoContainer: {
