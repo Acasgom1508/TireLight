@@ -14,8 +14,14 @@ import {
   Alert,
   Modal,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import Feather from "react-native-vector-icons/Feather";
 import * as ImagePicker from "expo-image-picker";
@@ -51,9 +57,10 @@ export default function Perfil() {
   const cloud_name = "dai0shknj";
   const preset_name = "prueba";
   const [loading, setLoading] = useState(false);
+  const isFocused = useIsFocused();
 
   // Navigation
-  const navigation = useNavigation(); 
+  const navigation = useNavigation();
 
   // UseEffect para cargar los datos del usuario al iniciar la pantalla
   useEffect(() => {
@@ -81,17 +88,36 @@ export default function Perfil() {
 
       cargarDatosUsuario();
     }
-  }, []);
+  }, [isFocused, user]);
 
   // Función para actualizar los campos del usuario
   const actualizarCampo = async (campo, valor) => {
-    if (user) {
-      try {
-        const refDoc = doc(db, "Usuarios", user.uid);
-        await updateDoc(refDoc, { [campo]: valor });
-      } catch (error) {
-        Alert.alert("Error", `No se pudo actualizar el campo ${campo}`);
+    if (!user) return;
+    try {
+      // Guardamos nombre anterior para la comparación
+      const oldName = nombre;
+      // Actualizamos el campo en el documento de Usuario
+      const refDoc = doc(db, "Usuarios", user.uid);
+      await updateDoc(refDoc, { [campo]: valor });
+
+      // Si es cambio de nombre, recorremos todas las fotos y actualizamos las que coincidan
+      if (campo === "nombre") {
+        const fotosSnap = await getDocs(collection(db, "Fotos"));
+        fotosSnap.docs.forEach(async (fotoDoc) => {
+          const data = fotoDoc.data();
+          if (data.Usuario === oldName) {
+            await updateDoc(fotoDoc.ref, { Usuario: valor });
+          }
+        });
       }
+
+      // Actualizamos también el state local
+      if (campo === "nombre") setNombre(valor);
+      if (campo === "telefono") setTelefono(valor);
+      if (campo === "direccion") setDireccion(valor);
+    } catch (error) {
+      Alert.alert("Error", `No se pudo actualizar el campo ${campo}`);
+      console.error(error);
     }
   };
 
@@ -463,7 +489,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#D3D3D3",
     paddingBottom: height * 0.01,
   },
-  
+
   valor: {
     marginLeft: width * 0.02,
     fontSize: width * 0.05,

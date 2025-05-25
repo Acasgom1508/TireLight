@@ -21,7 +21,7 @@ import {
   increment,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
@@ -49,6 +49,7 @@ export default function Concurso() {
   const db = FIREBASE_DB;
   const user = auth.currentUser;
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
 
   // Cargamos datos usuario
   useEffect(() => {
@@ -68,11 +69,12 @@ export default function Concurso() {
         Alert.alert("Error", "No se pudieron cargar los datos del usuario.");
       }
     })();
-  }, []);
+  }, [isFocused, user]);
 
   // Cargamos temática e imágenes
   useEffect(() => {
     (async () => {
+      if (!user) return;
       try {
         const snaps = await getDocs(collection(db, "Tematicas"));
         let actual = null;
@@ -107,7 +109,7 @@ export default function Concurso() {
         Alert.alert("Error", "No se pudieron cargar las temáticas o imágenes.");
       }
     })();
-  }, []);
+  }, [isFocused, user]);
 
   // Cargamos ganador anterior
   useEffect(() => {
@@ -130,7 +132,7 @@ export default function Concurso() {
         Alert.alert("Error", "No se pudieron cargar los datos del ganador.");
       }
     })();
-  }, [antiguaTematica]);
+  }, [isFocused, user]);
 
   // Función de voto
   const sumarVotos = async (fotoId, votosActuales) => {
@@ -438,8 +440,6 @@ const styles = StyleSheet.create({
 
   votosFoto: {
     position: "absolute",
-    top: 0,
-    left: 0,
     backgroundColor: "#ED6D2F",
     color: "#fff",
     fontWeight: "bold",
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingHorizontal: 15,
     borderTopLeftRadius: 10,
-    borderBottomRightRadius: 15,
+    borderBottomRightRadius: 10,
   },
 
   botonVotar: {
