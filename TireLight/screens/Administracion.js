@@ -39,6 +39,7 @@ export default function Administracion() {
   // Cargamos las imágenes
   useEffect(() => {
     (async () => {
+      if (!user) return;
       try {
         const fotosSnap = await getDocs(collection(db, "Fotos"));
         const imgs = fotosSnap.docs

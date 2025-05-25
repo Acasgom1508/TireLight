@@ -40,6 +40,7 @@ export default function Fotos() {
   // Cargamos las imágenes
   useEffect(() => {
     (async () => {
+      if (!user) return;
       try {
         const refDoc = doc(db, "Usuarios", user.uid);
         const docSnap = await getDoc(refDoc);
