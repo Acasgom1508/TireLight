@@ -212,7 +212,7 @@ export default function Concurso() {
 
       {/* Modal bases */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
@@ -221,6 +221,11 @@ export default function Concurso() {
           <View style={styles.contenidoModal}>
             <Text style={styles.tituloModal}>Bases de la temática actual</Text>
             <Text style={styles.textoModal}>{bases || "No hay bases."}</Text>
+            <Text style={styles.textoInformativo}>
+              Recuerda que durante cada rally tendrás 20 votos disponibles.
+              Puedes gestionarlos como desees, pero no serán recargados hasta
+              que comience el siguiente rally
+            </Text>
             <TouchableOpacity
               style={styles.botonCerrar}
               onPress={() => setModalVisible(false)}
@@ -403,6 +408,13 @@ const styles = StyleSheet.create({
   tituloModal: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
 
   textoModal: { fontSize: 16, marginBottom: 20 },
+
+  textoInformativo: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 20,
+  },
 
   botonCerrar: { backgroundColor: "#1E205B", borderRadius: 5, padding: 10 },
 

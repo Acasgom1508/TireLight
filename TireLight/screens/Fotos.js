@@ -84,7 +84,7 @@ export default function Fotos() {
     switch (estado) {
       case "Aceptada":
         return "green";
-      case "Cancelada":
+      case "Rechazada":
         return "#d31818";
       case "Pendiente":
         return "#FFA500";
