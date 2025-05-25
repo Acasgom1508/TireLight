@@ -18,6 +18,7 @@ import {
   collection,
   getDocs,
   increment,
+  deleteDoc,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import Feather from "react-native-vector-icons/Feather";
@@ -52,6 +53,7 @@ export default function Fotos() {
           .map((doc) => ({ id: doc.id, ...doc.data() }))
           .filter((d) => d.Usuario === nombre)
           .map((d) => ({
+            id: d.id,
             tematica: d.Tematica,
             url: d.Url,
             titulo: d.Titulo,
@@ -66,6 +68,17 @@ export default function Fotos() {
       }
     })();
   }, [isFocused, user, imagenesUsuario]);
+
+  const borrarFoto = (id) => async () => {
+    try {
+      const refDoc = doc(db, "Fotos", id);
+      await deleteDoc(refDoc);
+      Alert.alert("Foto eliminada", "Foto eliminada correctamente.");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "No se pudo eliminar la foto.");
+    }
+  }
 
   const getEstadoColor = (estado) => {
     switch (estado) {
@@ -114,7 +127,7 @@ export default function Fotos() {
                   <Text style={{ fontWeight: "bold" }}>Fecha: </Text>
                   {foto.fecha}
                 </Text>
-                <TouchableOpacity style={styles.botonBorrar}>
+                <TouchableOpacity style={styles.botonBorrar} onPress={borrarFoto(foto.id)}>
                   <Feather name="trash" size={30} color="white" style={{margin: 10}}/>
                 </TouchableOpacity>
               </View>
