@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
 
   botonAtras: {
     position: "absolute",
-    left: width * 0.1,
+    left: width * 0.07,
   },
 
   header: {

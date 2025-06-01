@@ -1,4 +1,3 @@
-import { StatusBar } from "expo-status-bar";
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -11,15 +10,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  collection,
-  getDocs,
-  increment,
-  deleteDoc,
-} from "firebase/firestore";
+import { doc, updateDoc, collection, getDocs } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import Feather from "react-native-vector-icons/Feather";
 
@@ -141,8 +132,19 @@ export default function Administracion() {
             </View>
           ))
         ) : (
-          <Text style={{ textAlign: "center", marginTop: 10 }}>
-            No hay imágenes.
+          <Text
+            style={{
+              textAlign: "center",
+              marginTop: 20,
+              fontSize: width * 0.04,
+              color: "#404040",
+              backgroundColor: "#fff",
+              padding: 10,
+              borderRadius: 10,
+            }}
+          >
+            No hay imágenes pendientes. {"\n"} Cuando un usuario suba una foto,
+            aparecerá aquí.
           </Text>
         )}
       </ScrollView>
@@ -160,7 +162,7 @@ const styles = StyleSheet.create({
 
   botonAtras: {
     position: "absolute",
-    left: width * 0.1,
+    left: width * 0.07,
   },
 
   header: {

@@ -15,7 +15,7 @@ import Feather from "react-native-vector-icons/Feather";
 import { useNavigation } from "@react-navigation/native";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore"; // Añadido para Firestore
+import { doc, getDoc } from "firebase/firestore";
 
 const { width, height } = Dimensions.get("window");
 
@@ -91,18 +91,39 @@ export default function InicioSesion() {
         <View style={styles.container}>
           <Text style={styles.titulo}>Iniciar Sesión</Text>
 
-          <TextInput
-            style={styles.input}
-            value={correo}
-            placeholder="Correo electrónico"
-            onChangeText={(text) => setCorreo(text)}
-          />
-
-          <View style={{ position: "relative", width: width * 0.8 }}>
+          <View style={styles.inputContainer}>
+            <Feather
+              name="mail"
+              size={width * 0.06}
+              color="#1E205B"
+              style={styles.inputIcon}
+            />
             <TextInput
-              style={styles.input}
+              style={styles.inputWithIcon}
+              value={correo}
+              placeholder="Correo electrónico"
+              placeholderTextColor="#404040"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              onChangeText={(text) => setCorreo(text)}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Feather
+              name="lock"
+              size={width * 0.06}
+              color="#1E205B"
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={[
+                styles.inputWithIcon,
+                { paddingRight: width * 0.15 }
+              ]}
               value={pass}
               placeholder="Contraseña"
+              placeholderTextColor="#404040"
               secureTextEntry={!mostrarPass}
               onChangeText={(text) => setPass(text)}
             />
@@ -125,7 +146,7 @@ export default function InicioSesion() {
             <Text style={styles.preguntaCont}>¿Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
 
-          {/* Si esta cargando, aparece un indicador */}
+          {/* Indicador de carga o botón de iniciar sesión */}
           {cargando ? (
             <ActivityIndicator
               size="large"
@@ -199,6 +220,32 @@ const styles = StyleSheet.create({
     marginHorizontal: width * 0.05,
   },
 
+  // Nuevo contenedor de input + ícono
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: width * 0.8,
+    height: height * 0.07,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#1E205B",
+    marginTop: height * 0.03,
+  },
+
+  // Estilo para el ícono dentro del input
+  inputIcon: {
+    marginLeft: width * 0.04,
+    marginRight: width * 0.02,
+  },
+
+  // Estilo para el TextInput cuando tiene ícono
+  inputWithIcon: {
+    flex: 1,
+    fontSize: width * 0.05,
+    color: "#404040",
+  },
+
   boton: {
     backgroundColor: "#1E205B",
     borderRadius: width * 0.03,
@@ -226,19 +273,6 @@ const styles = StyleSheet.create({
     marginRight: width * 0.03,
   },
 
-  input: {
-    width: width * 0.8,
-    height: height * 0.07,
-    backgroundColor: "#F0F0F0",
-    borderRadius: 10,
-    paddingHorizontal: width * 0.05,
-    marginTop: height * 0.03,
-    fontSize: width * 0.05,
-    color: "#404040",
-    borderWidth: 2,
-    borderColor: "#1E205B",
-  },
-
   pregunta: {
     fontSize: width * 0.045,
     color: "#1F1F25",
@@ -251,7 +285,6 @@ const styles = StyleSheet.create({
     fontSize: width * 0.045,
     color: "#ED6D2F",
     textAlign: "center",
-    
   },
 
   crearcuenta: {
@@ -269,8 +302,8 @@ const styles = StyleSheet.create({
 
   iconoOjo: {
     position: "absolute",
-    right: width * 0.05,
-    top: height * 0.05,
+    right: width * 0.04,
+    top: (height * 0.07 - width * 0.06) / 2,
     zIndex: 1,
   },
 });

@@ -43,7 +43,6 @@ export default function Concurso() {
   const [agTitulo, setAgTitulo] = useState(null);
 
   const [modalVisible, setModalVisible] = useState(false);
-  //const [numeroVotados, setNumeroVotados] = useState(0);
 
   const auth = FIREBASE_AUTH;
   const db = FIREBASE_DB;
@@ -119,7 +118,7 @@ export default function Concurso() {
         const snaps = await getDocs(collection(db, "Fotos"));
         snaps.forEach((doc) => {
           const d = doc.data();
-          if (d.Tematica === antiguaTematica) {
+          if (d.Tematica === antiguaTematica && d.Estado === "Ganadora") {
             setAgUsuario(d.Usuario);
             setAgFoto(d.Url);
             setAgVotos(d.Votos || 0);
@@ -241,9 +240,8 @@ export default function Concurso() {
         {antiguaTematica && (
           <View>
             <View style={styles.encabezado}>
-              <Text style={styles.textoEncabezado}>
-                Ganador "{antiguaTematica}"
-              </Text>
+              <Text style={styles.subtituloAG}>Ganador anterior</Text>
+              <Text style={styles.textoEncabezado}>{antiguaTematica}</Text>
             </View>
             <View style={styles.fotoContainer}>
               <Image source={{ uri: agFoto }} style={styles.fotoRallyUsuario} />
@@ -271,7 +269,7 @@ export default function Concurso() {
           <View
             style={{
               alignItems: "center",
-              marginVertical: 10,
+              marginBottom: 15,
               borderRadius: 50,
               borderWidth: 1,
               borderColor: "#ED6D2F",
@@ -335,19 +333,25 @@ const styles = StyleSheet.create({
   },
 
   encabezado: {
-    flexDirection: "row",
     padding: 7,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#ED6D2F",
     marginTop: 15,
+    marginBottom: 15,
   },
 
   textoEncabezado: {
     fontSize: width * 0.06,
     fontWeight: "bold",
     color: "#fff",
+  },
+
+  subtituloAG: {
+    fontSize: width * 0.04,
+    color: "#fff",
+    marginLeft: 10,
   },
 
   imagen: {

@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,19 +8,15 @@ import {
   TouchableOpacity,
   Dimensions,
   TextInput,
-  ActivityIndicator,
-  KeyboardAvoidingView,
   Alert,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import {
   doc,
   addDoc,
-  getDoc,
   updateDoc,
   collection,
   increment,
-  getDocs,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import Feather from "react-native-vector-icons/Feather";
@@ -42,7 +38,6 @@ export default function AnnadirFoto() {
 
   // Firebase
   const auth = FIREBASE_AUTH;
-  const db = FIREBASE_DB;
   const user = auth.currentUser;
 
   // Cloudinary - datos API

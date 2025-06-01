@@ -79,7 +79,7 @@ export default function Fotos() {
       console.error(error);
       Alert.alert("Error", "No se pudo eliminar la foto.");
     }
-  }
+  };
 
   const getEstadoColor = (estado) => {
     switch (estado) {
@@ -89,6 +89,8 @@ export default function Fotos() {
         return "#d31818";
       case "Pendiente":
         return "#FFA500";
+      case "Ganadora":
+        return "#c80fbd";
     }
   };
 
@@ -128,8 +130,16 @@ export default function Fotos() {
                   <Text style={{ fontWeight: "bold" }}>Fecha: </Text>
                   {foto.fecha}
                 </Text>
-                <TouchableOpacity style={styles.botonBorrar} onPress={borrarFoto(foto.id)}>
-                  <Feather name="trash" size={30} color="white" style={{margin: 10}}/>
+                <TouchableOpacity
+                  style={styles.botonBorrar}
+                  onPress={borrarFoto(foto.id)}
+                >
+                  <Feather
+                    name="trash"
+                    size={30}
+                    color="white"
+                    style={{ margin: 10 }}
+                  />
                 </TouchableOpacity>
               </View>
               <Text style={styles.tematicaFoto}>{foto.tematica}</Text>
@@ -156,7 +166,7 @@ const styles = StyleSheet.create({
 
   botonAtras: {
     position: "absolute",
-    left: width * 0.1,
+    left: width * 0.07,
   },
 
   header: {
@@ -237,5 +247,5 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 30,
     right: 20,
-  }
+  },
 });
