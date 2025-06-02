@@ -17,6 +17,7 @@ import {
   updateDoc,
   collection,
   increment,
+  getDocs,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import Feather from "react-native-vector-icons/Feather";

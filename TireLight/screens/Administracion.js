@@ -10,7 +10,13 @@ import {
   ScrollView,
 } from "react-native";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
-import { doc, updateDoc, collection, getDocs } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  collection,
+  getDocs,
+  increment,
+} from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import Feather from "react-native-vector-icons/Feather";
 
@@ -58,6 +64,18 @@ export default function Administracion() {
     try {
       const fotoRef = doc(db, "Fotos", id);
       await updateDoc(fotoRef, { Estado: "Aceptada" });
+
+      // Actualizar el número de fotos de la temática
+      const tematicasRef = collection(FIREBASE_DB, "Tematicas");
+      const querySnapshot = await getDocs(tematicasRef);
+
+      querySnapshot.forEach(async (docSnapshot) => {
+        if (docSnapshot.data().Seleccionado === "Si") {
+          const tematicaDocRef = doc(FIREBASE_DB, "Tematicas", docSnapshot.id);
+          await updateDoc(tematicaDocRef, { Fotos: increment(1) });
+        }
+      });
+
       Alert.alert("Éxito", "Foto aceptada correctamente.");
     } catch (e) {
       console.error(e);
@@ -229,7 +247,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignSelf: "center",
     position: "absolute",
-    top: 30,
+    top: 25,
     right: 100,
   },
 
@@ -242,7 +260,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignSelf: "center",
     position: "absolute",
-    top: 30,
+    top: 25,
     right: 20,
   },
 });
