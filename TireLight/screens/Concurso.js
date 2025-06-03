@@ -64,7 +64,6 @@ export default function Concurso() {
           setVotosUsuario(datos.Votos || 0);
         }
       } catch (e) {
-        console.error(e);
         Alert.alert("Error", "No se pudieron cargar los datos del usuario.");
       }
     })();
@@ -104,7 +103,6 @@ export default function Concurso() {
           setImagenesTematica(imgs);
         }
       } catch (e) {
-        console.error(e);
         Alert.alert("Error", "No se pudieron cargar las temáticas o imágenes.");
       }
     })();
@@ -127,7 +125,6 @@ export default function Concurso() {
           }
         });
       } catch (e) {
-        console.error(e);
         Alert.alert("Error", "No se pudieron cargar los datos del ganador.");
       }
     })();
@@ -160,7 +157,6 @@ export default function Concurso() {
         `Te quedan ${restantes} voto${restantes === 1 ? "" : "s"}.`
       );
     } catch (e) {
-      console.error(e);
       Alert.alert("Error", "No se pudieron registrar los votos.");
     }
   };
