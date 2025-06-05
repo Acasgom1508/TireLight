@@ -26,6 +26,7 @@ export default function Administracion() {
   const navigation = useNavigation();
 
   const [imagenesUsuario, setImagenesUsuario] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
 
   // Firebase
   const auth = FIREBASE_AUTH;
@@ -58,6 +59,32 @@ export default function Administracion() {
       }
     })();
   }, [isFocused, user, imagenesUsuario]);
+
+  // Cargamos los usuarios
+  useEffect(() => {
+    (async () => {
+      if (!user) return;
+      try {
+        const usuariosSnap = await getDocs(collection(db, "Usuarios"));
+        // Primero quitamos todos los documentos cuyo id sea igual a user.uid
+        const lista = usuariosSnap.docs
+          .filter((doc) => doc.id !== user.uid)
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              nombre: data.nombre,
+              correo: data.correo,
+              rol: data.rol,
+            };
+          });
+        setUsuarios(lista);
+      } catch (e) {
+        console.error(e);
+        Alert.alert("Error", "No se pudieron cargar los usuarios.");
+      }
+    })();
+  }, [isFocused, user, usuarios]);
 
   // Aceptar foto
   const aceptarFoto = async (id) => {
@@ -106,6 +133,79 @@ export default function Administracion() {
       </View>
 
       <ScrollView style={styles.scrollViewFotos}>
+        <View style={styles.usuarios}>
+          <Text style={styles.textoinformativo}>Administrar Usuarios</Text>
+          {usuarios.length > 0 ? (
+            usuarios.map((usuario, i) => (
+              <View
+                key={i}
+                style={{
+                  paddingVertical: 20,
+                  paddingLeft: 10,
+                  alignItems: "left",
+                }}
+              >
+                <Text style={styles.nombreUsuario}>
+                  {usuario.nombre} -{" "}
+                  {usuario.rol == "admin" ? "Administrador" : "Usuario normal"}
+                </Text>
+                <Text style={styles.correoUsuario}>{usuario.correo}</Text>
+                <TouchableOpacity
+                  style={styles.botonUsuarioNormal}
+                  onPress={async () => {
+                    const usuarioRef = doc(db, "Usuarios", usuario.id);
+                    await updateDoc(usuarioRef, { rol: "usuario" });
+                    Alert.alert(
+                      "Éxito",
+                      "Ahora el usuario es un usuario normal."
+                    );
+                    setUsuarios((prev) =>
+                      prev.map((u) =>
+                        u.id === usuario.id ? { ...u, rol: "usuario" } : u
+                      )
+                    );
+                  }}
+                >
+                  <Feather
+                    name="refresh-cw"
+                    size={30}
+                    color="#38A169"
+                    style={{ margin: 10 }}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.botonHacerAdmin}
+                  onPress={async () => {
+                    const usuarioRef = doc(db, "Usuarios", usuario.id);
+                    await updateDoc(usuarioRef, { rol: "admin" });
+                    Alert.alert(
+                      "Éxito",
+                      "Se ha asignado el rol de administrador al usuario correctamente."
+                    );
+                    setUsuarios((prev) =>
+                      prev.map((u) =>
+                        u.id === usuario.id ? { ...u, rol: "admin" } : u
+                      )
+                    );
+                  }}
+                >
+                  <Feather
+                    name="star"
+                    size={30}
+                    color="#FFC400"
+                    style={{ margin: 10 }}
+                  />
+                </TouchableOpacity>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.textoinformativo}>
+              No hay usuarios registrados.
+            </Text>
+          )}
+        </View>
+
         {imagenesUsuario.length > 0 ? (
           imagenesUsuario.map((foto, i) => (
             <View style={styles.fotoContainer} key={i}>
@@ -150,17 +250,7 @@ export default function Administracion() {
             </View>
           ))
         ) : (
-          <Text
-            style={{
-              textAlign: "center",
-              marginTop: 20,
-              fontSize: width * 0.04,
-              color: "#404040",
-              backgroundColor: "#fff",
-              padding: 10,
-              borderRadius: 10,
-            }}
-          >
+          <Text style={styles.textoinformativo}>
             No hay imágenes pendientes. {"\n"} Cuando un usuario suba una foto,
             aparecerá aquí.
           </Text>
@@ -262,5 +352,54 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 25,
     right: 20,
+  },
+
+  textoinformativo: {
+    textAlign: "center",
+    fontSize: width * 0.04,
+    color: "#404040",
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 10,
+    fontWeight: "bold",
+  },
+
+  usuarios: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+
+  nombreUsuario: {
+    fontSize: width * 0.04,
+    color: "#1E205B",
+    fontWeight: "bold",
+    marginVertical: 5,
+  },
+
+  correoUsuario: {
+    fontSize: width * 0.035,
+    color: "#404040",
+    marginBottom: 5,
+  },
+
+  botonUsuarioNormal: {
+    position: "absolute",
+    right: 10,
+    top: 10,
+    backgroundColor: "#f2f2f2",
+    borderRadius: 15,
+    padding: 5,
+  },
+
+  botonHacerAdmin: {
+    position: "absolute",
+    right: 80,
+    top: 10,
+    backgroundColor: "#f2f2f2",
+    borderRadius: 15,
+    padding: 5,
   },
 });

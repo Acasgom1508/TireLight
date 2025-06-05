@@ -68,7 +68,7 @@ export default function Fotos() {
         Alert.alert("Error", "No se pudieron cargar las temáticas o imágenes.");
       }
     })();
-  }, [isFocused, user, imagenesUsuario]);
+  }, [isFocused, user]);
 
   const borrarFoto = (id) => async () => {
     try {

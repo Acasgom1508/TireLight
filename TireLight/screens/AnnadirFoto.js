@@ -9,6 +9,7 @@ import {
   Dimensions,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import {
@@ -28,14 +29,12 @@ const { width, height } = Dimensions.get("window");
 export default function AnnadirFoto() {
   const navigation = useNavigation();
   const route = useRoute();
-  // recogemos el nombre de usuario de la pantalla anterior
-  const { nombreUsuario } = route.params;
-  const { tematica } = route.params;
+  // recogemos el nombre de usuario y la temática de la pantalla anterior
+  const { nombreUsuario, tematica } = route.params;
 
   const [foto, setFoto] = useState(null);
   const [titulo, setTitulo] = useState(null);
-  const [fotosUsuario, setFotosUsuario] = useState(null);
-  const [fotosTematica, setFotosTematica] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Firebase
   const auth = FIREBASE_AUTH;
@@ -44,7 +43,6 @@ export default function AnnadirFoto() {
   // Cloudinary - datos API
   const cloud_name = "dai0shknj";
   const preset_name = "prueba";
-  const [loading, setLoading] = useState(false);
 
   // Fecha de hoy
   const fechaActual = new Date();
@@ -54,14 +52,12 @@ export default function AnnadirFoto() {
 
   // Función para abrir la galería y seleccionar una imagen
   const pickImage = async () => {
-    // Solicita permisos si no están dados
     const result = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!result.granted) {
       Alert.alert("Permisos denegados", "Necesitas dar acceso a la galería");
       return;
     }
 
-    // Abre la galería
     const pickerResult = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       aspect: [4, 3],
@@ -76,9 +72,7 @@ export default function AnnadirFoto() {
 
   // Función para subir la imagen a Cloudinary
   const uploadImage = async (image) => {
-    // Código adaptado a react native de https://github.com/regenerik/guia-cloudinary-reactjs/blob/master/Cloudinary.jsx
     const data = new FormData();
-
     data.append("file", {
       uri: image.uri,
       name: "upload.jpg",
@@ -86,7 +80,7 @@ export default function AnnadirFoto() {
     });
     data.append("upload_preset", preset_name);
 
-    setLoading(true);
+    setLoading(true); // <-- Activar indicador
 
     try {
       const response = await fetch(
@@ -105,7 +99,7 @@ export default function AnnadirFoto() {
       console.error("Error uploading image:", error);
       Alert.alert("Error", "No se pudo subir la imagen");
     } finally {
-      setLoading(false);
+      setLoading(false); // <-- Desactivar indicador
     }
   };
 
@@ -151,30 +145,37 @@ export default function AnnadirFoto() {
         <Text style={styles.textoHeader}>Publicar foto</Text>
       </View>
 
-      {/* Boton añadir foto o foto */}
-      {!foto ? (
-        <TouchableOpacity style={styles.botonAnnadirFoto} onPress={pickImage}>
-          <Feather
-            name="upload"
-            size={26}
-            color="#333"
-            style={{ marginRight: 10 }}
-          />
-          <Text style={{ fontSize: 18, fontWeight: "600", color: "#333" }}>
-            Añadir foto
-          </Text>
-        </TouchableOpacity>
+      {/* Si loading es true, mostramos el indicador de carga */}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1E205B" />
+          <Text style={styles.loadingText}>Subiendo imagen...</Text>
+        </View>
       ) : (
-        <Image
-          source={{ uri: foto }}
-          style={{
-            width: "90%",
-            height: height * 0.25,
-            borderRadius: 10,
-            marginBottom: height * 0.02,
-            marginTop: height * 0.05,
-          }}
-        />
+        !foto ? (
+          <TouchableOpacity style={styles.botonAnnadirFoto} onPress={pickImage}>
+            <Feather
+              name="upload"
+              size={26}
+              color="#333"
+              style={{ marginRight: 10 }}
+            />
+            <Text style={{ fontSize: 18, fontWeight: "600", color: "#333" }}>
+              Añadir foto
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <Image
+            source={{ uri: foto }}
+            style={{
+              width: "90%",
+              height: height * 0.25,
+              borderRadius: 10,
+              marginBottom: height * 0.02,
+              marginTop: height * 0.05,
+            }}
+          />
+        )
       )}
 
       <Text style={styles.textoInformativo}>
@@ -280,5 +281,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: height * 0.02,
     width: "90%",
+  },
+
+  loadingContainer: {
+    marginTop: height * 0.1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#404040",
   },
 });
