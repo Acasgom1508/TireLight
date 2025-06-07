@@ -18,7 +18,6 @@ import {
   updateDoc,
   collection,
   increment,
-  getDocs,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../FirebaseConfig";
 import Feather from "react-native-vector-icons/Feather";
@@ -80,7 +79,7 @@ export default function AnnadirFoto() {
     });
     data.append("upload_preset", preset_name);
 
-    setLoading(true); // <-- Activar indicador
+    setLoading(true);
 
     try {
       const response = await fetch(
@@ -99,7 +98,7 @@ export default function AnnadirFoto() {
       console.error("Error uploading image:", error);
       Alert.alert("Error", "No se pudo subir la imagen");
     } finally {
-      setLoading(false); // <-- Desactivar indicador
+      setLoading(false);
     }
   };
 

@@ -68,13 +68,16 @@ export default function Fotos() {
         Alert.alert("Error", "No se pudieron cargar las temáticas o imágenes.");
       }
     })();
-  }, [isFocused, user]);
+  }, [isFocused, user, imagenesUsuario]);
 
   const borrarFoto = (id) => async () => {
     try {
       const refDoc = doc(db, "Fotos", id);
       await deleteDoc(refDoc);
       Alert.alert("Foto eliminada", "Foto eliminada correctamente.");
+
+      const fotosUsu = doc(FIREBASE_DB, "Usuarios", user.uid);
+      await updateDoc(fotosUsu, { fotos: increment(-1) });
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "No se pudo eliminar la foto.");

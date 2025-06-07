@@ -185,7 +185,7 @@ export default function Concurso() {
           }}
           style={styles.imagen}
         />
-        <Text style={styles.bienvenida}>Bienvenido {nombre}</Text>
+        <Text style={styles.bienvenida}>Bienvenido/a {nombre}</Text>
       </View>
 
       {/* Botón añadir */}
